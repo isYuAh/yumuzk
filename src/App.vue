@@ -367,7 +367,7 @@ function playSong(song: song){
             }
         })
     }else if (song.type === 'netease') {
-        if (!config.api) {
+        if (!config.neteaseApi.enable) {
             Netease.getSongUrl (normalClient, [song.id]).then((res: AxiosResponse) => {
                 if (res.data.data[0]) {
                     if (songSource.value) {
@@ -391,7 +391,7 @@ function playSong(song: song){
                 }
             })
         }else {
-            normalClient.get(config.apiUrl + 'song/url', {params: {id: song.id}}).then (res => {
+            normalClient.get(config.neteaseApi.url + 'song/url', {params: {id: song.id}}).then (res => {
                 if (res.data.data[0]) {
                     if (songSource.value) {
                         songSource.value.src = res.data.data[0].url;
@@ -401,7 +401,7 @@ function playSong(song: song){
                             show_songface.value = true;
                             songfaceImg.value.src = song.pic
                         }else {
-                            normalClient.get(config.apiUrl + 'song/detail', {params: {ids: song.id}}).then((res: AxiosResponse) => {
+                            normalClient.get(config.neteaseApi.url + 'song/detail', {params: {ids: song.id}}).then((res: AxiosResponse) => {
                                 if (res.data.songs[0].al.picUrl) {
                                     show_songface.value = true;
                                     songfaceImg.value!.src = res.data.songs[0].al.picUrl
