@@ -367,28 +367,53 @@ function playSong(song: song){
             }
         })
     }else if (song.type === 'netease') {
-        Netease.getSongUrl (normalClient, [song.id]).then((res: AxiosResponse) => {
-            if (res.data.data[0]) {
-                if (songSource.value) {
-                    songSource.value.src = res.data.data[0].url;
-                }
-                if (songfaceImg.value) {
-                    if (song.pic) {
-                        show_songface.value = true;
-                        songfaceImg.value.src = song.pic
-                    }else {
-                        Netease.getSongDetail(normalClient, song.id).then((res: AxiosResponse) => {
-                            if (res.data.songs[0].al.picUrl) {
-                                show_songface.value = true;
-                                songfaceImg.value!.src = res.data.songs[0].al.picUrl
-                            }else {
-                                show_songface.value = false;
-                            }
-                        })
+        if (!config.api) {
+            Netease.getSongUrl (normalClient, [song.id]).then((res: AxiosResponse) => {
+                if (res.data.data[0]) {
+                    if (songSource.value) {
+                        songSource.value.src = res.data.data[0].url;
+                    }
+                    if (songfaceImg.value) {
+                        if (song.pic) {
+                            show_songface.value = true;
+                            songfaceImg.value.src = song.pic
+                        }else {
+                            Netease.getSongDetail(normalClient, song.id).then((res: AxiosResponse) => {
+                                if (res.data.songs[0].al.picUrl) {
+                                    show_songface.value = true;
+                                    songfaceImg.value!.src = res.data.songs[0].al.picUrl
+                                }else {
+                                    show_songface.value = false;
+                                }
+                            })
+                        }
                     }
                 }
-            }
-        })
+            })
+        }else {
+            normalClient.get(config.apiUrl + 'song/url', {params: {id: song.id}}).then (res => {
+                if (res.data.data[0]) {
+                    if (songSource.value) {
+                        songSource.value.src = res.data.data[0].url;
+                    }
+                    if (songfaceImg.value) {
+                        if (song.pic) {
+                            show_songface.value = true;
+                            songfaceImg.value.src = song.pic
+                        }else {
+                            normalClient.get(config.apiUrl + 'song/detail', {params: {ids: song.id}}).then((res: AxiosResponse) => {
+                                if (res.data.songs[0].al.picUrl) {
+                                    show_songface.value = true;
+                                    songfaceImg.value!.src = res.data.songs[0].al.picUrl
+                                }else {
+                                    show_songface.value = false;
+                                }
+                            })
+                        }
+                    }
+                }
+            })
+        }
     }
     if (songSource.value) {
         songSource.value.addEventListener('loadedmetadata', () => {

@@ -26,7 +26,7 @@
         <div class="divider forbidSelect">
             <div class="dividerTip">歌曲列表</div>
             <div class="divideLine"></div>
-            <input v-model="filter" class="search" />
+            <input v-model="filter" class="search" placeholder="搜索" />
         </div>
         <div class="songs">
             <div class="right">
@@ -246,7 +246,6 @@ function playAll() {
     color: #333;
 }
 .divider .search {
-    
     margin: 0 5px;
     font-family: SourceSansCNM;
     border: none;
