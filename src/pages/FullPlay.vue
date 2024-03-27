@@ -147,7 +147,7 @@ function proceedLrc(lrc: song_lrcConfig) {
         let lines = lrc.content.split(/\r?\n/);
         lrc.lrc = [];
         lines.forEach((line: string) => {
-            const match = /\[(\d{2}):(\d{2}\.\d{2})\](.*)/.exec(line);
+            const match = /\[(\d{2}):(\d{2}\.\d{2,4})\](.*)/.exec(line);
             if (match) {
                 // 提取时间和文字
                 const minutes = parseInt(match[1], 10);
@@ -160,6 +160,7 @@ function proceedLrc(lrc: song_lrcConfig) {
                 })
             }
         })
+        console.log();
         lrc.status = 'parsed';
         return;
     }

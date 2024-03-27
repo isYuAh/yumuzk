@@ -362,6 +362,7 @@ function playSong(song: song){
                 }
                 normalClient.get(ZKStore.config.neteaseApi.url + 'lyric', {params: {id: song.id}}).then((res: AxiosResponse) => {
                     if (res.data.lrc.lyric) {
+                        console.log(res.data.lrc);
                         ZKStore.play.song.lrc = {
                             status: 'enable',
                             type: 'content',
