@@ -1,13 +1,15 @@
 <template>
-<Transition appear name="tb_appear">
+<div class="fixedContainer"> <!--保证定位-->
+    <Transition appear name="tb_appear">
     <div class="tb_container">
-    <div class="tb_b tb_left"></div>
-    <div class="tb_b tb_right"></div>
-    <div class="tb_b tb_top"></div>
-    <div class="tb_b tb_bottom"></div>
-    <slot></slot>
-</div>
+        <div class="tb_b tb_left"></div>
+        <div class="tb_b tb_right"></div>
+        <div class="tb_b tb_top"></div>
+        <div class="tb_b tb_bottom"></div>
+        <slot></slot>
+    </div>
 </Transition>
+</div>
 </template>
 
 <script setup lang='ts'>
@@ -15,6 +17,10 @@
 </script>
 
 <style scoped>
+.fixedContainer {
+    width: 182px;
+    height: 182px;
+}
 .tb_container {
     position: relative;
     padding: 10px;

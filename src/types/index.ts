@@ -79,6 +79,14 @@ export type song = song_bilibili |
                     song_netease_outer |
                     song_netease_other |
                     song_siren
+export type songInPlay = {
+    pic: string,
+    title: string,
+    singer: string,
+    type: string,
+    url: string,
+    lrc: song_lrc
+}
 export const clientInjectionKey: InjectionKey<AxiosInstance> = Symbol()
 export const normalClientInjectionKey: InjectionKey<AxiosInstance> = Symbol()
 export const playSongInjectionKey: InjectionKey<(song: song) => void> = Symbol()

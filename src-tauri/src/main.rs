@@ -3,9 +3,7 @@
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 
-use crate::{
-    utils::{set_window_shadow}
-};
+use crate::utils::set_window_shadow;
 mod utils;
 
 fn main() {

@@ -4,15 +4,17 @@
       @ended="playEnded"
       @timeupdate="updateProgress"
       @volumechange="changeVolumeInfo"
-      
       autoplay ref="songSource"></video>
   </div>
+  <Transition name="uianim">
+    <FullPlay v-if="ZKStore.showFullPlay"></FullPlay>
+  </Transition>
   <div class="container">
     <div data-tauri-drag-region class="header forbidSelect">
       <div data-tauri-drag-region class="title">Yumuzk</div>
       <div class="tabs">
-        <div @click="ZKStore.nowTab = 'List'" :class="{tab: true, active: ZKStore.nowTab === 'List'}">首页</div>
-        <div @click="ZKStore.nowTab = 'songList'" :class="{tab: true, active: ZKStore.nowTab === 'songList'}">歌单</div>
+        <div @click="ZKStore.nowTab = 'Playlist'" :class="{tab: true, active: ZKStore.nowTab === 'Playlist'}">首页</div>
+        <div @click="ZKStore.nowTab = 'PlaylistDetail'" :class="{tab: true, active: ZKStore.nowTab === 'PlaylistDetail'}">歌单</div>
       </div>
       <div class="controlbtn">
         <button @click="appWindow.minimize()" class="btn minimize">-</button>
@@ -21,13 +23,13 @@
     </div>
     <div class="content">
         <Transition appear name="uianim">
-            <List key="list" v-if="ZKStore.nowTab === 'List'"></List>
-            <songList key="songlist" v-else-if="ZKStore.nowTab === 'songList'"></songList>
+            <Playlist key="Playlist" v-if="ZKStore.nowTab === 'Playlist'"></Playlist>
+            <PlaylistDetail key="PlaylistDetail" v-else-if="ZKStore.nowTab === 'PlaylistDetail'"></PlaylistDetail>
             <Loading key="Loading" v-else-if="ZKStore.nowTab === 'Loading'"</Loading>
         </Transition>
     </div>
     <div class="play forbidSelect">
-        <div v-show="show_songface" class="songface">
+        <div v-show="ZKStore.play.show_songface" class="songface">
             <img ref="songfaceImg" referrerpolicy="no-referrer" src="" alt="">
         </div>
         <div ref="progress_tooltip" style="display: none" class="progress-tooltip">00:00</div>
@@ -52,7 +54,7 @@
             </div>
         </div>
         <div class="durationInfo">
-            <div class="infoItem">{{ songCurTime }} / {{ songDuration }}</div>
+            <div class="infoItem">{{ ZKStore.play.curTime }} / {{ ZKStore.play.durationTime }}</div>
         </div>
         <div class="volumeController">
             <div class="volumeTip">VOLUME {{ Math.round(100*ZKStore.play.volume) }}</div>
@@ -73,29 +75,38 @@
                 </div>
             </Transition>
         </div>
+        <div class="fullPlayBtn">
+            <div v-show="ZKStore.play.song.title" @click="ZKStore.showFullPlay = true" class="fullPlayBtn">
+                <svg @click="console.log(ZKStore.play.song);;ZKStore.showFullPlay = true" t="1711336037990" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1699"><path d="M251.069046 983.355077l471.355077-471.355077L251.069046 40.644923A23.809313 23.809313 0 0 1 284.740267 6.973703l488.190687 488.190687a23.809313 23.809313 0 0 1 0 33.67122L284.740267 1017.026297A23.809313 23.809313 0 0 1 251.069046 983.355077z" fill="currentColor" p-id="1700"></path></svg>
+            </div>
+        </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { Command } from '@tauri-apps/api/shell';
+
 import { readDir, createDir, BaseDirectory, exists, readTextFile, FileEntry } from '@tauri-apps/api/fs';
 import { tauri } from '@tauri-apps/api';
 import { exit } from '@tauri-apps/api/process';
 import { appWindow } from '@tauri-apps/api/window';
-import { config, saveConfig, useZKStore } from './stores/useZKstore'
+import { config, useZKStore } from './stores/useZKstore'
 import axios, { AxiosResponse } from 'axios';
 import axiosTauriApiAdapter from 'axios-tauri-api-adapter';
 import { clientInjectionKey, normalClientInjectionKey, playSongInjectionKey, type song } from './types';
-import { onMounted, provide, watch } from 'vue';
+import { provide, watch } from 'vue';
 import { WBI } from './WBI';
 import { ref } from 'vue';
 import { minmax, secondsToMmss } from './utils/u';
 
 //@ts-ignore
 import Netease from './utils/netease/netease.js'
-import List from './pages/List.vue';
-import songList from './pages/songList.vue';
+import Playlist from './pages/Playlist.vue';
+import PlaylistDetail from './pages/PlaylistDetail.vue';
 import Loading from './pages/Loading.vue'
+import FullPlay from './pages/FullPlay.vue'
+import { resourceDir } from '@tauri-apps/api/path';
 
 const ZKstore = useZKStore();
 const client = axios.create({
@@ -134,11 +145,13 @@ client.get('https://api.bilibili.com/x/web-interface/nav').then(res => {
 provide(clientInjectionKey, client);
 provide(normalClientInjectionKey, normalClient);
 (async ()=> {
-  if (!await exists('res/lists', {dir: BaseDirectory.Resource})) {
-    createDir("res/lists", {dir: BaseDirectory.Resource})
-  }
+    if (!await exists('res/lists', {dir: BaseDirectory.Resource})) {
+        createDir("res/lists", {dir: BaseDirectory.Resource})
+    }
+    let neteaseapi = new Command('node', ['./res/neteaseapi/app.js'], {cwd: await resourceDir()});
+    neteaseapi.spawn();
   async function loadLists(files: FileEntry[]) {
-    ZKstore.lists = await Promise.all(files.filter(f => {return f.path.substring(f.path.lastIndexOf('.')) === '.json'}).map(async (file: FileEntry) => {
+    ZKstore.playlists = await Promise.all(files.filter(f => {return f.path.substring(f.path.lastIndexOf('.')) === '.json'}).map(async (file: FileEntry) => {
       return JSON.parse(await readTextFile(file.path))
     }))
   }
@@ -155,11 +168,8 @@ let progressChooseFill = ref<HTMLDivElement>();
 let progress_tooltip = ref<HTMLDivElement>();
 let volumeProgressFill = ref<HTMLDivElement>();
 let ZKStore = useZKStore();
-let songCurTime = ref('');
-let songDuration = ref('');
 let songfaceImg = ref<HTMLImageElement>();
 let songInformation = ref<HTMLDivElement>();
-let show_songface = ref(false);
 // let lrcConfig = ref<song_lrc_item[]>([])
 
 function changeVolumeInfo() {
@@ -167,29 +177,21 @@ function changeVolumeInfo() {
         if (volumeProgressFill.value) {
             volumeProgressFill.value.style.width = `${100*songSource.value.volume}%`
             ZKStore.play.volume = songSource.value.volume;
-            config.volume = songSource.value.volume;
-            saveConfig();
         }
     }
 }
-//初始化
-onMounted(() => {songSource.value!.volume = ZKStore.play.volume})
-watch(() => ZKStore.play.mode, () => {
-    config.mode = ZKStore.play.mode;
-    saveConfig();
-})
 function playEnded() {
     if (ZKStore.play.mode === 'pause') {
         
     }else if (ZKStore.play.mode === 'list') {
-        let si = ZKStore.play.songIndex;
-        if (si === ZKStore.play.songs.length - 1) {
-            playSong(ZKStore.play.songs[0])
+        let si = ZKStore.play.indexInPlaylist;
+        if (si === ZKStore.play.playlist.length - 1) {
+            playSong(ZKStore.play.playlist[0])
         }else {
-            playSong(ZKStore.play.songs[si + 1]);
+            playSong(ZKStore.play.playlist[si + 1]);
         }
     }else if (ZKStore.play.mode === 'rand') {
-        playSong(ZKStore.play.songs[Math.floor(Math.random() * (ZKStore.play.songs.length))])
+        playSong(ZKStore.play.playlist[Math.floor(Math.random() * (ZKStore.play.playlist.length))])
     }else if (ZKStore.play.mode === 'loop') {
         songSource.value!.currentTime = 0;
         songSource.value!.play();
@@ -210,7 +212,7 @@ function playEnded() {
 function updateProgress() {
     if (songSource.value && progressFill.value) {
         progressFill.value.style.width = `${minmax(songSource.value.currentTime / ZKStore.play.duration * 100, 0, 100)}%` 
-        songCurTime.value = secondsToMmss(songSource.value.currentTime)
+        ZKStore.play.curTime = secondsToMmss(songSource.value.currentTime)
         // ZKStore.play.activeLrc = getHighlightedIndex(songSource.value.currentTime, lrcConfig.value);
         // let offset = minmax(document.querySelector('.lrcItem.active').offsetTop - document.querySelector('.lrcContent')?.clientHeight / 2 + document.querySelector('.lrcItem.active')?.clientHeight, 0, document.querySelector('.lrcContainer')?.clientHeight - document.querySelector('.lrcContent')?.clientHeight / 2);
         // document.querySelector(".lrcContainer").style.top = `${-offset}px`
@@ -245,8 +247,18 @@ function changeVolume(e: any) {
     }
 }
 function playSong(song: song){
-    Object.assign(ZKStore.play.song,song);
-    ZKStore.play.songIndex = ZKStore.play.songs.lastIndexOf(song);
+    ZKStore.play.song = {
+        title: song.title,
+        type: song.type,
+        singer: song.singer,
+        pic: song.pic || '',
+        lrc: {
+            type: 'web',
+            path: ''
+        },
+        url: ''
+    }
+    ZKStore.play.indexInPlaylist = ZKStore.play.playlist.lastIndexOf(song);
     if (song.type === 'bilibili') {
         client.get('https://api.bilibili.com/x/web-interface/view', {
             params: {
@@ -255,18 +267,16 @@ function playSong(song: song){
         }).then(res => {
             if (songfaceImg.value) {
                 if (ZKStore.play.song.pic) {
-                    show_songface.value = true;
+                    ZKStore.play.show_songface = true;
                     songfaceImg.value.src = ZKStore.play.song.pic;
                 }else if(res.data.data.pic) {
-                    show_songface.value = true;
+                    ZKStore.play.show_songface = true;
+                    ZKStore.play.song.pic = res.data.data.pic;
                     songfaceImg.value.src = res.data.data.pic;
                 }else {
-                    show_songface.value = false;
-
+                    ZKStore.play.show_songface = false;
                 }
             }
-            song.title = song.title || res.data.data.title;
-            song.singer = song.singer || res.data.data.owner.name;
             let cid = res.data.data.cid;
             client.get('https://api.bilibili.com/x/player/wbi/playurl', {
                 params: {
@@ -275,47 +285,50 @@ function playSong(song: song){
                     platform: "html5"
                 }
             }).then(res => {
-                console.log(res);
                 if (songSource.value) {
-                    songSource.value.src = res.data.data.durl[0].url;
+                    ZKStore.play.song.url = res.data.data.durl[0].url;
+                    songSource.value.src = ZKStore.play.song.url;
                 }
             })
         });
     }else if (song.type === 'local') {
         if (songfaceImg.value) {
             if (song.pic) {
-                show_songface.value = true;
+                ZKStore.play.show_songface = true;
                 songfaceImg.value.src = song.pic;
             }else {
-                show_songface.value = false;
+                ZKStore.play.show_songface = false;
             }
         }
         if (songSource.value) {
-            songSource.value.src = tauri.convertFileSrc(song.path);
+            ZKStore.play.song.url = tauri.convertFileSrc(song.path);
+            songSource.value.src = ZKStore.play.song.url;
         }
     }else if (song.type === 'web') {
         if (songfaceImg.value) {
             if (song.pic) {
-                show_songface.value = true;
+                ZKStore.play.show_songface = true;
                 songfaceImg.value.src = song.pic;
             }else {
-                show_songface.value = false;
+                ZKStore.play.show_songface = false;
             }
         }
         if (songSource.value) {
+            ZKStore.play.song.url = song.url;
             songSource.value.src = song.url;
         }
     }else if (song.type === 'netease_outer') {
         if (songfaceImg.value) {
             if (song.pic) {
-                show_songface.value = true;
+                ZKStore.play.show_songface = true;
                 songfaceImg.value.src = song.pic;
             }else {
-                show_songface.value = false;
+                ZKStore.play.show_songface = false;
             }
         }
         if (songSource.value) {
-            songSource.value.src = `http://music.163.com/song/media/outer/url?id=${song.id}.mp3`;
+            ZKStore.play.song.url = `http://music.163.com/song/media/outer/url?id=${song.id}.mp3`;
+            songSource.value.src = ZKStore.play.song.url;
         }
     }else if (song.type === 'netease_other') {
         normalClient.post("https://music.liuzhijin.cn/", {
@@ -332,17 +345,19 @@ function playSong(song: song){
             if (res.data.data[0]) {
                 if (songfaceImg.value) {
                     if (song.pic) {
-                        show_songface.value = true;
+                        ZKStore.play.show_songface = true;
                         songfaceImg.value.src = song.pic;
                     }else if(res.data.data[0].pic) {
-                        show_songface.value = true;
+                        ZKStore.play.show_songface = true;
+                        ZKStore.play.song.pic = res.data.data[0].pic;
                         songfaceImg.value.src = res.data.data[0].pic;
                     }else {
-                        show_songface.value = false;
+                        ZKStore.play.show_songface = false;
                     }
                 }
                 if (songSource.value) {
-                    songSource.value.src = res.data.data[0].url;
+                    ZKStore.play.song.url = res.data.data[0].url;
+                    songSource.value.src = ZKStore.play.song.url;
                 }
             }
         })
@@ -357,12 +372,14 @@ function playSong(song: song){
                 // proceedLrc(ZKStore.play.song.lrc);
             }
             if (songSource.value) {
-                songSource.value.src = res.data.data.sourceUrl;
+                ZKStore.play.song.url = res.data.data.sourceUrl;
+                songSource.value.src = ZKStore.play.song.url;
             }
             if (songfaceImg.value) {
-                show_songface.value = true;
+                ZKStore.play.show_songface = true;
                 normalClient.get(`https://monster-siren.hypergryph.com/api/album/${res.data.data.albumCid}/detail`).then(res => {
-                    songfaceImg.value!.src = res.data.data.coverUrl;
+                    ZKStore.play.song.pic = res.data.data.coverUrl;
+                    songfaceImg.value!.src = ZKStore.play.song.pic;
                 })
             }
         })
@@ -371,19 +388,20 @@ function playSong(song: song){
             Netease.getSongUrl (normalClient, [song.id]).then((res: AxiosResponse) => {
                 if (res.data.data[0]) {
                     if (songSource.value) {
-                        songSource.value.src = res.data.data[0].url;
+                        ZKStore.play.song.url = res.data.data[0].url;
+                        songSource.value.src = ZKStore.play.song.url;
                     }
                     if (songfaceImg.value) {
                         if (song.pic) {
-                            show_songface.value = true;
+                            ZKStore.play.show_songface = true;
                             songfaceImg.value.src = song.pic
                         }else {
                             Netease.getSongDetail(normalClient, song.id).then((res: AxiosResponse) => {
                                 if (res.data.songs[0].al.picUrl) {
-                                    show_songface.value = true;
+                                    ZKStore.play.show_songface = true;
                                     songfaceImg.value!.src = res.data.songs[0].al.picUrl
                                 }else {
-                                    show_songface.value = false;
+                                    ZKStore.play.show_songface = false;
                                 }
                             })
                         }
@@ -394,19 +412,21 @@ function playSong(song: song){
             normalClient.get(config.neteaseApi.url + 'song/url', {params: {id: song.id}}).then (res => {
                 if (res.data.data[0]) {
                     if (songSource.value) {
-                        songSource.value.src = res.data.data[0].url;
+                        ZKStore.play.song.url = res.data.data[0].url;
+                        songSource.value.src = ZKStore.play.song.url;
                     }
                     if (songfaceImg.value) {
                         if (song.pic) {
-                            show_songface.value = true;
+                            ZKStore.play.show_songface = true;
                             songfaceImg.value.src = song.pic
                         }else {
                             normalClient.get(config.neteaseApi.url + 'song/detail', {params: {ids: song.id}}).then((res: AxiosResponse) => {
                                 if (res.data.songs[0].al.picUrl) {
-                                    show_songface.value = true;
+                                    ZKStore.play.show_songface = true;
+                                    ZKStore.play.song.pic = res.data.songs[0].al.picUrl;
                                     songfaceImg.value!.src = res.data.songs[0].al.picUrl
                                 }else {
-                                    show_songface.value = false;
+                                    ZKStore.play.show_songface = false;
                                 }
                             })
                         }
@@ -419,7 +439,7 @@ function playSong(song: song){
         songSource.value.addEventListener('loadedmetadata', () => {
             if (songSource.value) {
                 ZKStore.play.duration = songSource.value.duration;
-                songDuration.value = secondsToMmss(songSource.value.duration)
+                ZKStore.play.durationTime = secondsToMmss(songSource.value.duration)
                 ZKStore.play.status = 'play';
             }
         })
@@ -455,19 +475,19 @@ function playSong(song: song){
 //     })
 // }
 function playPrevSong() {
-    let si = ZKStore.play.songIndex;
+    let si = ZKStore.play.indexInPlaylist;
     if (si === 0) {
-        playSong(ZKStore.play.songs[0])
+        playSong(ZKStore.play.playlist[0])
     }else {
-        playSong(ZKStore.play.songs[si - 1]);
+        playSong(ZKStore.play.playlist[si - 1]);
     }
 }
 function playNextSong() {
-    let si = ZKStore.play.songIndex;
-    if (si === ZKStore.play.songs.length - 1) {
-        playSong(ZKStore.play.songs[0])
+    let si = ZKStore.play.indexInPlaylist;
+    if (si === ZKStore.play.playlist.length - 1) {
+        playSong(ZKStore.play.playlist[0])
     }else {
-        playSong(ZKStore.play.songs[si + 1]);
+        playSong(ZKStore.play.playlist[si + 1]);
     }
 }
 watch(() => ZKStore.play.status, (nv) => {
@@ -478,7 +498,7 @@ watch(() => ZKStore.play.status, (nv) => {
         songSource.value.pause();
     }
 })
-watch(show_songface, (nv) => {
+watch(() => ZKStore.play.show_songface, (nv) => {
     console.log(nv);
     if (!songInformation.value) {
         return;
@@ -551,6 +571,7 @@ body {
   top: 0;
   bottom: 0;
   font-size: 20px;
+  z-index: 100;
 }
 .header .controlbtn .btn {
   width: 32px;
@@ -743,5 +764,15 @@ body {
 .playcontroller-enter-from {
     margin-top: 5px;
     opacity: 0;
+}
+.play .fullPlayBtn {
+    position: absolute;
+    /* margin-left: 20px; */
+    right: 10px;
+    width: 24px;
+    height: 24px;
+}
+.play .fullPlayBtn svg {
+    transform: rotate(-90deg);
 }
 </style>

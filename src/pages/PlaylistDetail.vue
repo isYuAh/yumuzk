@@ -6,12 +6,12 @@
     <div class="partContainer">
         <div class="listInfo">
             <div class="faceImg">
-                <img :src="ZKStore.play.list.pic" alt="">
+                <img :src="ZKStore.playlists[ZKStore.playlist.listIndex].pic" alt="">
             </div>
             <div class="info forbidSelect">
-                <div class="title">{{ ZKStore.play.list.title }}</div>
+                <div class="title">{{ ZKStore.playlists[ZKStore.playlist.listIndex].title }}</div>
                 <div class="bottom">
-                    <div class="total">TOTAL {{ ZKStore.play.songs.length }}</div>
+                    <div class="total">TOTAL {{ ZKStore.play.playlist.length }}</div>
                     <div class="total">AN ALBUM CREATED</div>
                     <button @click="playAll" class="PlayAll">
                         <div class="svgIcon">
@@ -32,7 +32,11 @@
             <div class="right">
                 <simplebar data-auto-hide class="simplebar">
                     <div class="songTable forbidSelect">
-                        <div v-show="song.title.includes(filter) || song.singer.includes(filter)" @dblclick="playSong(song)" :class="{song: true, active: index === ZKStore.play.songIndex}" v-for="song, index in ZKStore.play.songs">
+                        <div 
+                            v-show="song.title.includes(filter) || song.singer.includes(filter)" 
+                            @dblclick="playSong_withCheck(song)" 
+                            class="song" 
+                            v-for="song in ZKStore.playlist.songs">
                             <div class="songInfo title">{{ song.title }}<sub>{{ song.type }}</sub></div>
                             <div class="songInfo author">{{ song.singer }}</div>
                         </div>
@@ -45,18 +49,27 @@
 </template>
 
 <script setup lang='ts'>
-import { playSongInjectionKey } from '../types'
+import { playSongInjectionKey, type song } from '../types'
 import simplebar from 'simplebar-vue';
 import 'simplebar-vue/dist/simplebar.min.css'
-import { inject, ref } from 'vue';
+import { inject, ref, toRaw } from 'vue';
 import { useZKStore } from '../stores/useZKstore';
 let ZKStore = useZKStore();
 let playSong = inject(playSongInjectionKey)!;
 let filter = ref('');
 function playAll() {
     ZKStore.play.mode = 'list';
-    if (ZKStore.play.songs[0]) {
-        playSong(ZKStore.play.songs[0])
+    ZKStore.play.playlist = structuredClone(toRaw(ZKStore.playlist.songs))
+    if (ZKStore.play.playlist[0]) {
+        playSong(ZKStore.play.playlist[0])
+    }
+}
+function playSong_withCheck(song: song) {
+    if (ZKStore.play.playlist.length) {
+        playSong(song)
+    }else {
+        ZKStore.play.playlist = structuredClone(toRaw(ZKStore.playlist.songs))
+        playSong(song)
     }
 }
 </script>
