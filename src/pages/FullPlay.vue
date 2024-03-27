@@ -3,9 +3,16 @@
     <div class="left">
         <AroundTragetBorder>
             <div class="pic">
-                <img :src="ZKStore.play.song.pic" alt="">
+                <Transition name="uianim">
+                    <img v-if="ZKStore.play.song.pic" :src="ZKStore.play.song.pic" alt="">
+                    <div v-else class="nonePic">
+                        <AroundTragetBorder>
+                            None
+                        </AroundTragetBorder>
+                    </div>
+                </Transition>
             </div>
-            <div class="singleLineTextEl title">{{ ZKStore.play.song.title }}</div>
+                <div class="singleLineTextEl title">{{ ZKStore.play.song.title }}</div>
             <div class="singleLineTextEl singer">{{ ZKStore.play.song.singer }}</div>
             <div class="singleLineTextEl type">{{ ZKStore.play.song.type }}</div>
             <div class="playProgressTip">
@@ -113,19 +120,22 @@ function updateHighlightedIndex() {
     return;
 }
 emitter.on('updateActiveLrcIndex', updateHighlightedIndex)
-watch([() => ZKStore.play.highlightLrcIndex, () => ZKStore.play.song], () => {
+watch([() => ZKStore.play.highlightLrcIndex, () => ZKStore.play.song.lrc, () => ZKStore.showFullPlay], () => {
     nextTick(() => {
-        if (lrcContainerEl.value && lrcContentEl.value) {
-            let activeLrcItem = <HTMLDivElement>lrcContainerEl.value.querySelector('.lrcItem.active')
-            if (activeLrcItem) {
-                let targetOffset = activeLrcItem.offsetTop -
-                                    lrcContentEl.value.clientHeight / 2 +
-                                    activeLrcItem.clientHeight / 2;
-                lrcContainerEl.value.style.top = `${-targetOffset}px`
+        if (ZKStore.play.song.lrc.status === 'parsed') {
+            // console.log('$', lrcContainerEl.value, lrcContentEl.value, lrcContainerEl.value!.querySelector('.lrcItem.active'));
+            if (lrcContainerEl.value && lrcContentEl.value) {
+                let activeLrcItem = <HTMLDivElement>lrcContainerEl.value.querySelector('.lrcItem.active')
+                if (activeLrcItem) {
+                    let targetOffset = activeLrcItem.offsetTop -
+                                        lrcContentEl.value.clientHeight / 2 +
+                                        activeLrcItem.clientHeight / 2;
+                    lrcContainerEl.value.style.top = `${-targetOffset}px`
+                }
             }
         }
     })
-})
+}, {deep: true})
 
 function proceedLrc(lrc: song_lrcConfig) {
     let url = '';
@@ -213,10 +223,19 @@ watch(() => ZKStore.play.song.lrc, (nv) => {
     align-items: center;
     position: relative;
 }
-.partContainer .left .pic {
+.partContainer .left .pic, .partContainer .left .nonePic {
+    position: relative;
     margin-top: 20px;
     width: 240px;
     height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.partContainer .left .nonePic {
+    /* border: 1px solid #18191C; */
+    font-family: NovecentoWide;
+    font-size: 30px;
 }
 .partContainer .left .pic img {
     width: 100%;
