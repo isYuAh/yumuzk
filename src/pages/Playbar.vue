@@ -350,6 +350,7 @@ function playSong(song: song){
                             Netease.getSongDetail(normalClient, song.id).then((res: any) => {
                                 if (res.data.songs[0].al.picUrl) {
                                     ZKStore.play.show_songface = true;
+                                    ZKStore.play.song.pic = res.data.songs[0].al.picUrl;
                                     songfaceImg.value!.src = res.data.songs[0].al.picUrl
                                 }else {
                                     ZKStore.play.show_songface = false;
