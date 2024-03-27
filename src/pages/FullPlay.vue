@@ -64,7 +64,7 @@
                 </div>
             </div>
             <div v-else-if="ZKStore.play.song.lrc.status !== 'parsed'" class="lrcStatus">
-                <div class="status">No lrc</div>
+                <div class="status">「 No lrc 」</div>
             </div>
         </Transition>
     </div>

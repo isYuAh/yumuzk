@@ -8,7 +8,7 @@
       <Transition appear name="playcontroller">
         <div v-show="!ZKStore.showFullPlay" class="tabs">
             <div @click="ZKStore.nowTab = 'Playlist'" :class="{tab: true, active: ZKStore.nowTab === 'Playlist'}">首页</div>
-            <div @click="ZKStore.nowTab = 'PlaylistDetail'" :class="{tab: true, active: ZKStore.nowTab === 'PlaylistDetail'}">歌单</div>
+            <div @click="turnToPlaylistDetail" :class="{tab: true, active: ZKStore.nowTab === 'PlaylistDetail'}">歌单</div>
         </div>
       </Transition>
       <div class="controlbtn">
@@ -33,11 +33,11 @@ import { Command } from '@tauri-apps/api/shell';
 import { readDir, createDir, BaseDirectory, exists, readTextFile, FileEntry } from '@tauri-apps/api/fs';
 import { exit } from '@tauri-apps/api/process';
 import { appWindow } from '@tauri-apps/api/window';
-import { useZKStore } from '@/stores/useZKstore'
+import { useZKStore, saveConfig } from '@/stores/useZKstore'
 import axios from 'axios';
 import axiosTauriApiAdapter from 'axios-tauri-api-adapter';
 import { clientInjectionKey, normalClientInjectionKey } from './types';
-import { provide } from 'vue';
+import { onMounted, provide, watch } from 'vue';
 import { WBI } from './WBI';
 import Playlist from '@/pages/Playlist.vue';
 import PlaylistDetail from './pages/PlaylistDetail.vue';
@@ -45,6 +45,8 @@ import Loading from '@/pages/Loading.vue'
 import FullPlay from '@/pages/FullPlay.vue'
 import Playbar from '@/pages/Playbar.vue'
 import { resourceDir } from '@tauri-apps/api/path';
+import { minmax } from './utils/u';
+import emitter from './emitter';
 
 const ZKStore = useZKStore();
 const client = axios.create({
@@ -60,6 +62,11 @@ const normalClient = axios.create({
     "User-Agent": 'Mozilla',
   }
 });
+function turnToPlaylistDetail() {
+  if (ZKStore.playlist.listIndex >= 0) {
+    ZKStore.nowTab = 'PlaylistDetail'
+  }
+}
 client.get('https://api.bilibili.com/x/web-interface/nav').then(res => {
   const {data: {data: { wbi_img: { img_url, sub_url } } } } = res;
   ZKStore.wbi = {
@@ -79,16 +86,25 @@ client.get('https://api.bilibili.com/x/web-interface/nav').then(res => {
     })
 }).catch(err => {console.log(err);})
 
-
+onMounted(() => {
+  readTextFile("res/config.json", {dir: BaseDirectory.Resource}).then(res => {
+    if (res) {
+      ZKStore.config = JSON.parse(res);
+      if (ZKStore.config.volume != undefined) {
+        emitter.emit('changeVolumeTo', minmax(ZKStore.config.volume, 0, 1));
+      }
+      if (ZKStore.config.mode) {
+        ZKStore.play.mode = ZKStore.config.mode;
+      }
+    }
+  })
+  watch(() => ZKStore.play.mode, () => {ZKStore.config.mode = ZKStore.play.mode; saveConfig()});
+})
 provide(clientInjectionKey, client);
 provide(normalClientInjectionKey, normalClient);
 (async ()=> {
     if (!await exists('res/lists', {dir: BaseDirectory.Resource})) {
         createDir("res/lists", {dir: BaseDirectory.Resource})
-    }
-    let res = await readTextFile("res/config.json", {dir: BaseDirectory.Resource});
-    if (res) {
-        ZKStore.config = JSON.parse(res);
     }
     let neteaseapi = new Command('node', ['./res/neteaseapi/app.js'], {cwd: await resourceDir()});
     neteaseapi.spawn();

@@ -67,7 +67,7 @@ import { tauri } from '@tauri-apps/api';
 import { AxiosError, AxiosResponse } from 'axios';
 import { clientInjectionKey, normalClientInjectionKey, type song } from '@/types';
 import { minmax, secondsToMmss } from '@/utils/u';
-import { useZKStore } from '@/stores/useZKstore'
+import { saveConfig, useZKStore } from '@/stores/useZKstore'
 import emitter from '@/emitter'
 //@ts-ignore
 import Netease from '../utils/netease/netease.js'
@@ -86,6 +86,8 @@ let normalClient = inject(normalClientInjectionKey)!;
 function changeVolumeInfo() {
     if (songSource.value) {
         ZKStore.play.volume = songSource.value.volume;
+        ZKStore.config.volume = songSource.value.volume
+        saveConfig();
     }
 }
 function playEnded() {
@@ -156,7 +158,14 @@ function playSong(song: song){
         },
         url: ''
     }
-    ZKStore.play.indexInPlaylist = ZKStore.play.playlist.lastIndexOf(song);
+    let findIndex = -1;
+    for (let i = 0; i < ZKStore.play.playlist.length; i++) {
+        if (JSON.stringify(ZKStore.play.playlist[i]) === JSON.stringify(song)) {
+            findIndex = i;
+            break;
+        }
+    }
+    ZKStore.play.indexInPlaylist = findIndex;
     if (song.type === 'bilibili') {
         client.get('https://api.bilibili.com/x/web-interface/view', {
             params: {
@@ -386,7 +395,7 @@ function changeCurTimeTo(to: number) {
 function playPrevSong() {
     let si = ZKStore.play.indexInPlaylist;
     if (si === 0) {
-        playSong(ZKStore.play.playlist[0])
+        playSong(ZKStore.play.playlist[ZKStore.play.playlist.length - 1])
     }else {
         playSong(ZKStore.play.playlist[si - 1]);
     }
