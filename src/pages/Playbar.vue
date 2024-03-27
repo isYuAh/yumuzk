@@ -320,6 +320,7 @@ function playSong(song: song){
                         ZKStore.play.song.url = `http://music.163.com/song/media/outer/url?id=${song.id}.mp3`;
                         songSource.value.src = ZKStore.play.song.url;
                     }
+                    console.log('使用outerAPI请求歌曲');
                 };
             }).finally(() => {
                 if (songfaceImg.value) {
@@ -335,6 +336,16 @@ function playSong(song: song){
                             }else {
                                 ZKStore.play.show_songface = false;
                             }
+                        }).catch(() => {
+                            console.log('使用NeteaseWebAPI请求详细信息');
+                            Netease.getSongDetail(normalClient, song.id).then((res: any) => {
+                                if (res.data.songs[0].al.picUrl) {
+                                    ZKStore.play.show_songface = true;
+                                    songfaceImg.value!.src = res.data.songs[0].al.picUrl
+                                }else {
+                                    ZKStore.play.show_songface = false;
+                                }
+                            })
                         })
                     }
                 }

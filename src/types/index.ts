@@ -7,16 +7,18 @@ export type list_basic = {
 export type list_data = {
     type: 'data'
     songs: song[],
-} & list_basic;
+}
 export type list_trace_bilibili_fav = {
     type: 'trace_bilibili_fav',
     favid: string,
-} & list_basic;
+}
 export type list_trace_siren = {
     type: 'trace_siren',
+}
+export type playlistComponent = list_data | list_trace_bilibili_fav | list_trace_siren;
+export type list = {
+    playlist: playlistComponent[]
 } & list_basic;
-export type list = list_data | list_trace_bilibili_fav | list_trace_siren;
-
 
 export type song_lrcConfig_web = {
     status: string,

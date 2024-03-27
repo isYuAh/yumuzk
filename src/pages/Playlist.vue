@@ -13,7 +13,7 @@
 
 <script setup lang='ts'>
 import { useZKStore } from '../stores/useZKstore';
-import { clientInjectionKey, list_trace_bilibili_fav } from '../types';
+import { clientInjectionKey, list_trace_bilibili_fav, playlistComponent } from '../types';
 import { inject } from 'vue';
 import { normalClientInjectionKey } from '../types';
 import { type song } from '../types';
@@ -21,6 +21,63 @@ import TargetBorder from '../components/TargetBorder.vue'
 let client = inject(clientInjectionKey)!;
 let normalClient = inject(normalClientInjectionKey)!;
 let ZKStore = useZKStore();
+function parseComponent(comIndex: number, components: playlistComponent[]) {
+    // console.log(comIndex, components[comIndex], '$');
+    let component = components[comIndex];
+    if (comIndex >= components.length) {
+        ZKStore.nowTab = 'PlaylistDetail';
+        return;
+    }
+    if (component.type === 'data') {
+        ZKStore.loading.text = `加载 Data 数据 ${comIndex + 1} / ${components.length}`;
+        useZKStore().playlist.songs.push(...component.songs);
+        comIndex++;
+        parseComponent(comIndex, components);
+    }else if (component.type === 'trace_bilibili_fav') {
+        let pn = 0;
+        let getNextPage = function() {
+            ZKStore.loading.text = `Bilibili 已加载 ${Math.max(pn)} 页 ${comIndex + 1} / ${components.length}`;
+            pn++;
+            client.get('https://api.bilibili.com/x/v3/fav/resource/list', {
+                params: {
+                    media_id: (component as list_trace_bilibili_fav).favid,
+                    pn: pn,
+                    ps: 20,
+                }
+            }).then(res => {
+                ZKStore.playlist.songs.push(...res.data.data.medias.map((m: any) => ({
+                    type: 'bilibili', 
+                    BV: m.bvid, 
+                    title: m.title,
+                    pic: m.cover,
+                    singer: m.upper.name})))
+                console.log(res.data.data.has_more, pn);
+                if (res.data.data.has_more) {
+                    getNextPage()
+                }else {
+                    comIndex++;
+                    parseComponent(comIndex, components);
+                }
+            })
+        }
+        getNextPage()
+    }else if (component.type === 'trace_siren') {
+        let songsApi = 'https://monster-siren.hypergryph.com/api/songs';
+        ZKStore.loading.text = `加载 塞壬唱片 ${comIndex + 1} / ${components.length}`;
+        normalClient.get(songsApi).then(res => {
+            ZKStore.playlist.songs.push(...res.data.data.list.map((s: any) => {
+                return <song>{
+                    title: s.name,
+                    singer: s.artists.join(' / '),
+                    type: 'siren',
+                    cid: s.cid
+                }
+            }))
+            comIndex++;
+            parseComponent(comIndex, components);
+        })
+    }
+}
 function checkDetail(index: number) {
     ZKStore.nowTab = 'Loading';
     ZKStore.loading.text = '';
@@ -30,49 +87,9 @@ function checkDetail(index: number) {
         let list = ZKStore.playlists[index];
         ZKStore.playlist.listIndex = index
         ZKStore.playlist.songs = [];
-        if (list.type === 'data') {
-            useZKStore().playlist.songs = list.songs;
-            ZKStore.nowTab = 'PlaylistDetail';
-        }else if (list.type === 'trace_bilibili_fav') {
-            let pn = 0;
-            let getNextPage = function() {
-                ZKStore.loading.text = `已加载 ${Math.max(pn)} 页`;
-                pn++;
-                client.get('https://api.bilibili.com/x/v3/fav/resource/list', {
-                    params: {
-                        media_id: (list as list_trace_bilibili_fav).favid,
-                        pn: pn,
-                        ps: 20,
-                    }
-                }).then(res => {
-                    ZKStore.playlist.songs.push(...res.data.data.medias.map((m: any) => ({
-                        type: 'bilibili', 
-                        BV: m.bvid, 
-                        title: m.title,
-                        pic: m.cover,
-                        singer: m.upper.name})))
-                    if (res.data.data.has_more) {
-                        getNextPage()
-                    }else {
-                        ZKStore.nowTab = 'PlaylistDetail';
-                    }
-                })
-            }
-            getNextPage()
-        }else if (list.type === 'trace_siren') {
-            let songsApi = 'https://monster-siren.hypergryph.com/api/songs';
-            normalClient.get(songsApi).then(res => {
-                ZKStore.playlist.songs = res.data.data.list.map((s: any) => {
-                    return <song>{
-                        title: s.name,
-                        singer: s.artists.join(' / '),
-                        type: 'siren',
-                        cid: s.cid
-                    }
-                })
-                ZKStore.nowTab = 'PlaylistDetail';
-            })
-        }
+        let components = list.playlist;
+        let comIndex = 0;
+        parseComponent(comIndex, components);
     }
 }
 </script>

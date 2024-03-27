@@ -467,12 +467,6 @@ function e(a, b, d, e) {
         f
 }
 
-console.log(d(
-    '{"ids":"[1474342935]","level":"standard","encodeType":"aac","csrf_token":""}',
-    "010001",
-    "00e0b509f6259df8642dbc35662901477df22677ec152b5ff68ace615bb7b725152b3ab17a876aea8a5aa76d2e417629ec4ee341f56135fccf695280104e0312ecbda92557c93870114af6c9d05c4f7f0c3685b7a46bee255932575cce10b424d813cfe4875d3e82047b97ddef52741d546b8e289dc6935b3ece0462db0a22b8e7",
-    "0CoJUm6Qyw8W8jud"))
-
 const reference = {
     d: JSON.stringify({}),
     e: '010001',
@@ -525,21 +519,7 @@ function getSongDetail(ins, id) {
         }
     })
 }
-function getPlaylistDetail(ins, id) {
-    return ins.post('https://music.163.com/api/v6/playlist/detail', Gen({
-        id: id,
-        n: 100000,
-        csrf_token: ""
-    }), {
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Origin": "https://music.163.com",
-            "Referer": "https://music.163.com",
-        }
-    })
-}
 export default {
     getSongUrl,
     getSongDetail,
-    getPlaylistDetail
 }
