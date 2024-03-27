@@ -1,18 +1,13 @@
 import { defineStore } from 'pinia';
 import type {list, song, songInPlay, song_lrc_item} from '../types'
-import { BaseDirectory, readTextFile, writeTextFile } from '@tauri-apps/api/fs';
-export let config: any = {};
-readTextFile("res/config.json", {dir: BaseDirectory.Resource}).then(res => {
-  if (res) {
-    config = JSON.parse(res);
-  }
-})
+import { BaseDirectory, writeTextFile } from '@tauri-apps/api/fs';
 export function saveConfig() {
-  writeTextFile('res/config.json', JSON.stringify(config), {dir: BaseDirectory.Resource})
+  writeTextFile('res/config.json', JSON.stringify(useZKStore().config), {dir: BaseDirectory.Resource})
 }
 
 export const useZKStore = defineStore('ZK', {
   state: () => ({
+    config: {} as any,
     playlists: <list[]>[],
     nowTab: 'Playlist',
     loading: {
@@ -36,6 +31,7 @@ export const useZKStore = defineStore('ZK', {
       lrcConfig: <song_lrc_item[]>[],
       show_songface: false,
       volume: 1,
+      progress: 0,
     },
     wbi: {},
     histroy: []

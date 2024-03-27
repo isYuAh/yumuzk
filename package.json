@@ -15,6 +15,7 @@
     "axios-tauri-api-adapter": "^0.2.1",
     "crypto-js": "^4.2.0",
     "md5": "^2.3.0",
+    "mitt": "^3.0.1",
     "normalize.css": "^8.0.1",
     "pinia": "^2.1.7",
     "simplebar-vue": "^2.3.3",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1",
+    "@types/node": "^20.11.30",
     "@vitejs/plugin-vue": "^5.0.4",
     "typescript": "^5.0.2",
     "vite": "^5.0.0",

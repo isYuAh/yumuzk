@@ -1,6 +1,6 @@
 <template>
 <div class="transitionContainer">
-    <div @click="ZKStore.nowTab = 'List';" class="returnBtn">
+    <div @click="ZKStore.nowTab = 'Playlist';" class="returnBtn">
         <svg t="1711457272465" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4244" width="48" height="48"><path d="M963.2 0L1024 67.2 512 614.4 0 67.2 60.8 0 512 480 963.2 0z" fill="currentColor" p-id="4245"></path></svg>
     </div>
     <div class="partContainer">
@@ -11,7 +11,7 @@
             <div class="info forbidSelect">
                 <div class="title">{{ ZKStore.playlists[ZKStore.playlist.listIndex].title }}</div>
                 <div class="bottom">
-                    <div class="total">TOTAL {{ ZKStore.play.playlist.length }}</div>
+                    <div class="total">TOTAL {{ ZKStore.playlist.songs.length }}</div>
                     <div class="total">AN ALBUM CREATED</div>
                     <button @click="playAll" class="PlayAll">
                         <div class="svgIcon">
@@ -49,27 +49,27 @@
 </template>
 
 <script setup lang='ts'>
-import { playSongInjectionKey, type song } from '../types'
+import { type song } from '../types'
 import simplebar from 'simplebar-vue';
 import 'simplebar-vue/dist/simplebar.min.css'
-import { inject, ref, toRaw } from 'vue';
+import { ref, toRaw } from 'vue';
 import { useZKStore } from '../stores/useZKstore';
+import emitter from '@/emitter';
 let ZKStore = useZKStore();
-let playSong = inject(playSongInjectionKey)!;
 let filter = ref('');
 function playAll() {
     ZKStore.play.mode = 'list';
     ZKStore.play.playlist = structuredClone(toRaw(ZKStore.playlist.songs))
     if (ZKStore.play.playlist[0]) {
-        playSong(ZKStore.play.playlist[0])
+        emitter.emit('playSong',ZKStore.play.playlist[0])
     }
 }
 function playSong_withCheck(song: song) {
     if (ZKStore.play.playlist.length) {
-        playSong(song)
+        emitter.emit('playSong',song)
     }else {
         ZKStore.play.playlist = structuredClone(toRaw(ZKStore.playlist.songs))
-        playSong(song)
+        emitter.emit('playSong',song)
     }
 }
 </script>

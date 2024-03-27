@@ -89,4 +89,3 @@ export type songInPlay = {
 }
 export const clientInjectionKey: InjectionKey<AxiosInstance> = Symbol()
 export const normalClientInjectionKey: InjectionKey<AxiosInstance> = Symbol()
-export const playSongInjectionKey: InjectionKey<(song: song) => void> = Symbol()
