@@ -18,24 +18,35 @@ export type list_trace_siren = {
 export type list = list_data | list_trace_bilibili_fav | list_trace_siren;
 
 
-export type song_lrc_web = {
+export type song_lrcConfig_web = {
+    status: string,
     type: 'web',
-    path: ''
+    path: string,
+    lrc: song_lrc
 }
-export type song_lrc_local = {
+export type song_lrcConfig_local = {
+    status: string,
     type: 'local',
-    path: ''
+    path: string,
+    lrc: song_lrc
+}
+export type song_lrcConfig_content = {
+    status: string,
+    type: 'content',
+    content: string,
+    lrc: song_lrc
 }
 export type song_lrc_item = {
     time: number,
     text: string
 }
-export type song_lrc = song_lrc_local | song_lrc_web;
+export type song_lrcConfig = song_lrcConfig_web | song_lrcConfig_local | song_lrcConfig_content;
+export type song_lrc = song_lrc_item[];
 export type song_basic = {
     title: string,
     singer: string,
     pic?: string,
-    lrc?: song_lrc
+    lrc?: song_lrcConfig
 }
 export type song_basic_w = {
     title?: string,
@@ -85,7 +96,7 @@ export type songInPlay = {
     singer: string,
     type: string,
     url: string,
-    lrc: song_lrc
+    lrc: song_lrcConfig
 }
 export const clientInjectionKey: InjectionKey<AxiosInstance> = Symbol()
 export const normalClientInjectionKey: InjectionKey<AxiosInstance> = Symbol()

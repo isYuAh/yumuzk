@@ -55,7 +55,7 @@
     </div>
     <div class="fullPlayBtn">
         <div v-show="ZKStore.play.song.title" @click="ZKStore.showFullPlay = true" class="fullPlayBtn">
-            <svg @click="console.log(ZKStore.play.song);;ZKStore.showFullPlay = true" t="1711336037990" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1699"><path d="M251.069046 983.355077l471.355077-471.355077L251.069046 40.644923A23.809313 23.809313 0 0 1 284.740267 6.973703l488.190687 488.190687a23.809313 23.809313 0 0 1 0 33.67122L284.740267 1017.026297A23.809313 23.809313 0 0 1 251.069046 983.355077z" fill="currentColor" p-id="1700"></path></svg>
+            <svg t="1711336037990" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1699"><path d="M251.069046 983.355077l471.355077-471.355077L251.069046 40.644923A23.809313 23.809313 0 0 1 284.740267 6.973703l488.190687 488.190687a23.809313 23.809313 0 0 1 0 33.67122L284.740267 1017.026297A23.809313 23.809313 0 0 1 251.069046 983.355077z" fill="currentColor" p-id="1700"></path></svg>
         </div>
     </div>
 </div>
@@ -64,7 +64,7 @@
 <script setup lang='ts'>
 import { inject, onUnmounted, ref, watch } from 'vue';
 import { tauri } from '@tauri-apps/api';
-import { AxiosResponse } from 'axios';
+import { AxiosError, AxiosResponse } from 'axios';
 import { clientInjectionKey, normalClientInjectionKey, type song } from '@/types';
 import { minmax, secondsToMmss } from '@/utils/u';
 import { useZKStore } from '@/stores/useZKstore'
@@ -105,22 +105,13 @@ function playEnded() {
         songSource.value!.play();
     }
 }
-// function getHighlightedIndex(currentTime: number, lrcArray: any) {
-//     // 遍历解析后的歌词数组
-//     for (let i = 0; i < lrcArray.length; i++) {
-//         // 如果当前时间小于当前歌词的时间，说明当前播放到了下一句歌词
-//         if (currentTime < lrcArray[i].time) {
-//             // 返回当前歌词的索引
-//             return i - 1 >= 0 ? i - 1 : 0;
-//         }
-//     }
-//     // 如果当前时间大于最后一句歌词的时间，则返回最后一句歌词的索引
-//     return lrcArray.length - 1;
-// }
 function updateTime() {
     if (songSource.value) {
-        ZKStore.play.progress = minmax(songSource.value.currentTime / ZKStore.play.duration * 100, 0, 100);
-        ZKStore.play.curTime = secondsToMmss(songSource.value.currentTime)
+        let c = songSource.value.currentTime;
+        ZKStore.play.progress = minmax(c / ZKStore.play.duration * 100, 0, 100);
+        ZKStore.play.curTimeNum = c
+        ZKStore.play.curTime = secondsToMmss(c);
+        emitter.emit('updateActiveLrcIndex');
     }
 }
 function changeProgress(e: MouseEvent) {
@@ -158,8 +149,10 @@ function playSong(song: song){
         singer: song.singer,
         pic: song.pic || '',
         lrc: {
+            status: 'disabled',
             type: 'web',
-            path: ''
+            path: '',
+            lrc: []
         },
         url: ''
     }
@@ -268,13 +261,13 @@ function playSong(song: song){
         })
     }else if (song.type === 'siren') {
         normalClient.get(`https://monster-siren.hypergryph.com/api/song/${song.cid}`).then(res => {
-            console.log(res.data.data.lyricUrl, res.data.data);
             if (res.data.data.lyricUrl) {
                 ZKStore.play.song.lrc = {
+                    status: 'enable',
                     type: 'web',
                     path: res.data.data.lyricUrl,
+                    lrc: []
                 }
-                // proceedLrc(ZKStore.play.song.lrc);
             }
             if (songSource.value) {
                 ZKStore.play.song.url = res.data.data.sourceUrl;
@@ -320,23 +313,41 @@ function playSong(song: song){
                         ZKStore.play.song.url = res.data.data[0].url;
                         songSource.value.src = ZKStore.play.song.url;
                     }
-                    if (songfaceImg.value) {
-                        if (song.pic) {
-                            ZKStore.play.show_songface = true;
-                            songfaceImg.value.src = song.pic
-                        }else {
-                            normalClient.get(ZKStore.config.neteaseApi.url + 'song/detail', {params: {ids: song.id}}).then((res: AxiosResponse) => {
-                                if (res.data.songs[0].al.picUrl) {
-                                    ZKStore.play.show_songface = true;
-                                    ZKStore.play.song.pic = res.data.songs[0].al.picUrl;
-                                    songfaceImg.value!.src = res.data.songs[0].al.picUrl
-                                }else {
-                                    ZKStore.play.show_songface = false;
-                                }
-                            })
-                        }
+                }
+            }).catch((err: AxiosError) => {
+                if (err.response?.status === 404) {
+                    if (songSource.value) {
+                        ZKStore.play.song.url = `http://music.163.com/song/media/outer/url?id=${song.id}.mp3`;
+                        songSource.value.src = ZKStore.play.song.url;
+                    }
+                };
+            }).finally(() => {
+                if (songfaceImg.value) {
+                    if (song.pic) {
+                        ZKStore.play.show_songface = true;
+                        songfaceImg.value.src = song.pic
+                    }else {
+                        normalClient.get(ZKStore.config.neteaseApi.url + 'song/detail', {params: {ids: song.id}}).then((res: AxiosResponse) => {
+                            if (res.data.songs[0].al.picUrl) {
+                                ZKStore.play.show_songface = true;
+                                ZKStore.play.song.pic = res.data.songs[0].al.picUrl;
+                                songfaceImg.value!.src = res.data.songs[0].al.picUrl
+                            }else {
+                                ZKStore.play.show_songface = false;
+                            }
+                        })
                     }
                 }
+                normalClient.get(ZKStore.config.neteaseApi.url + 'lyric', {params: {id: song.id}}).then((res: AxiosResponse) => {
+                    if (res.data.lrc.lyric) {
+                        ZKStore.play.song.lrc = {
+                            status: 'enable',
+                            type: 'content',
+                            content: res.data.lrc.lyric,
+                            lrc: []
+                        }
+                    }
+                })
             })
         }
     }
@@ -355,35 +366,12 @@ function changeVolumeTo(to: number) {
         songSource.value.volume = to;
     }
 }
-// function proceedLrc(lrc: song_lrc) {
-//     let url = '';
-//     if (lrc.type === 'web') {
-//         url = lrc.path
-//     }else {
-//         url = tauri.convertFileSrc(lrc.path);
-//     }
-//     normalClient.get(url, {
-//         responseType: 'text',
-//     }).then(res => {
-//         let lines = res.data.split(/\r?\n/);
-//         lrcConfig.value = [] as any;
-//         lines.forEach((line: string) => {
-//             const match = /\[(\d{2}):(\d{2}\.\d{2})\](.*)/.exec(line);
-//             if (match) {
-//                 // 提取时间和文字
-//                 const minutes = parseInt(match[1], 10);
-//                 const seconds = parseFloat(match[2]);
-//                 const timeInSeconds = minutes * 60 + seconds;
-//                 const text = match[3].trim();
-//                 lrcConfig.value.push({
-//                     time: timeInSeconds,
-//                     text: text,
-//                 })
-//             }
-//         })
-//         console.log(lrcConfig);
-//     })
-// }
+function changeCurTimeTo(to: number) {
+    if (songSource.value) {
+        songSource.value.currentTime = to;
+    }
+}
+
 function playPrevSong() {
     let si = ZKStore.play.indexInPlaylist;
     if (si === 0) {
@@ -422,9 +410,13 @@ emitter.on('playSong', playSong)
 emitter.on('playPrevSong', playPrevSong)
 emitter.on('playNextSong', playNextSong)
 emitter.on('changeVolumeTo', changeVolumeTo)
+emitter.on('changeCurTimeTo', changeCurTimeTo)
 onUnmounted(() => {
     emitter.off('playSong');
     emitter.off('changeVolumeTo')
+    emitter.off('playPrevSong')
+    emitter.off('playNextSong')
+    emitter.off('changeCurTimeTo')
 })
 </script>
 
@@ -570,22 +562,6 @@ onUnmounted(() => {
 }
 .play .playmodeController .modeitem:hover {
     color: #18191C;
-}
-.playcontroller-enter-active,
-.playcontroller-leave-active {
-    transition: all .2s;
-}
-.playcontroller-enter-from,
-.playcontroller-leave-to {
-    margin-top: 0;
-}
-.playcontroller-leave-to {
-    margin-top: -5px;
-    opacity: 0;
-}
-.playcontroller-enter-from {
-    margin-top: 5px;
-    opacity: 0;
 }
 .play .fullPlayBtn {
     position: absolute;

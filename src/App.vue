@@ -1,6 +1,6 @@
 <template>
   <Transition name="uianim">
-    <FullPlay v-if="ZKStore.showFullPlay"></FullPlay>
+    <FullPlay v-show="ZKStore.showFullPlay"></FullPlay>
   </Transition>
   <div class="container">
     <div data-tauri-drag-region class="header forbidSelect">
@@ -128,6 +128,22 @@ body {
     opacity: 0;
 }
 .uianim-enter-from {
+    margin-top: 5px;
+    opacity: 0;
+}
+.playcontroller-enter-active,
+.playcontroller-leave-active {
+    transition: all .2s;
+}
+.playcontroller-enter-from,
+.playcontroller-leave-to {
+    margin-top: 0;
+}
+.playcontroller-leave-to {
+    margin-top: -5px;
+    opacity: 0;
+}
+.playcontroller-enter-from {
     margin-top: 5px;
     opacity: 0;
 }

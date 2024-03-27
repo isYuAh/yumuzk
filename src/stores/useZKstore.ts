@@ -21,8 +21,21 @@ export const useZKStore = defineStore('ZK', {
     play: {
       playlist: <song[]>([] as any),
       indexInPlaylist: -1,
-      song: <songInPlay>({} as any),
+      song: <songInPlay>{
+        pic: '',
+        title: '',
+        singer: '',
+        type: '',
+        url: '',
+        lrc: {
+          status: 'disabled',
+          type: 'local',
+          path: '',
+          lrc: []
+        }
+      },
       curTime: '',
+      curTimeNum: 0,
       durationTime: '',
       duration: 0,
       status: 'pause',
@@ -32,6 +45,7 @@ export const useZKStore = defineStore('ZK', {
       show_songface: false,
       volume: 1,
       progress: 0,
+      highlightLrcIndex: -1,
     },
     wbi: {},
     histroy: []

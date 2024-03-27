@@ -137,33 +137,6 @@ function playSong_withCheck(song: song) {
     text-overflow: ellipsis;
     overflow: hidden;
 }
-.lrcContent {
-    height: 100%;
-    overflow: hidden;
-    position: relative;
-}
-.lrcContainer {
-    position: absolute;
-    top: 0;
-    transition: all .2s;
-    left: 0;
-    right: 0;
-}
-.lrcContainer .lrcItem {
-    height: 32px;
-    line-height: 32px;
-    font-family: PingFang SC;
-    margin: 5px 0;
-    text-align: center;
-    white-space: nowrap;
-    text-overflow: hidden;
-    word-break: break-all;
-    transition: all .2s;
-}
-.lrcContainer .lrcItem.active {
-    background-color: #18191C;
-    color: #fff;
-}
 
 .listInfo {
     display: flex;
