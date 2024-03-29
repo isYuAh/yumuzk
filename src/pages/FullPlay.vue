@@ -120,22 +120,36 @@ function updateHighlightedIndex() {
     return;
 }
 emitter.on('updateActiveLrcIndex', updateHighlightedIndex)
-watch([() => ZKStore.play.highlightLrcIndex, () => ZKStore.play.song.lrc, () => ZKStore.showFullPlay], () => {
-    nextTick(() => {
-        if (ZKStore.play.song.lrc.status === 'parsed') {
-            // console.log('$', lrcContainerEl.value, lrcContentEl.value, lrcContainerEl.value!.querySelector('.lrcItem.active'));
-            if (lrcContainerEl.value && lrcContentEl.value) {
-                let activeLrcItem = <HTMLDivElement>lrcContainerEl.value.querySelector('.lrcItem.active')
-                if (activeLrcItem) {
-                    let targetOffset = activeLrcItem.offsetTop -
-                                        lrcContentEl.value.clientHeight / 2 +
-                                        activeLrcItem.clientHeight / 2;
-                    lrcContainerEl.value.style.top = `${-targetOffset}px`
+async function freshLrcElement() {
+    if (!await appWindow.isMinimized()) {
+        nextTick(() => {
+            if (ZKStore.play.song.lrc.status === 'parsed') {
+                // console.log('$', lrcContainerEl.value, lrcContentEl.value, lrcContainerEl.value!.querySelector('.lrcItem.active'));
+                if (lrcContainerEl.value && lrcContentEl.value) {
+                    let activeLrcItem = <HTMLDivElement>lrcContainerEl.value.querySelector('.lrcItem.active')
+                    if (activeLrcItem) {
+                        // console.dir(activeLrcItem);
+                        // console.dir(lrcContentEl.value);
+                        // console.dir(lrcContentEl.value);
+                        // console.log(activeLrcItem.offsetTop, lrcContentEl.value.clientHeight, activeLrcItem.clientHeight, activeLrcItem.offsetTop -
+                        //                     lrcContentEl.value.clientHeight / 2 +
+                        //                     activeLrcItem.clientHeight / 2);
+                        let targetOffset = activeLrcItem.offsetTop -
+                                            lrcContentEl.value.clientHeight / 2 +
+                                            activeLrcItem.clientHeight / 2;
+                        lrcContainerEl.value.style.top = `${-targetOffset}px`
+                    }
                 }
             }
-        }
-    })
+        })
+    }
+}
+watch([() => ZKStore.play.highlightLrcIndex, () => ZKStore.play.song.lrc, () => ZKStore.showFullPlay], () => {
+    freshLrcElement();
 }, {deep: true})
+import { listen } from '@tauri-apps/api/event';
+import { appWindow } from '@tauri-apps/api/window';
+listen('tauri://resize', freshLrcElement);
 
 function proceedLrc(lrc: song_lrcConfig) {
     let url = '';
@@ -160,7 +174,6 @@ function proceedLrc(lrc: song_lrcConfig) {
                 })
             }
         })
-        console.log();
         lrc.status = 'parsed';
         return;
     }
