@@ -15,7 +15,11 @@ export type list_trace_bilibili_fav = {
 export type list_trace_siren = {
     type: 'trace_siren',
 }
-export type playlistComponent = list_data | list_trace_bilibili_fav | list_trace_siren;
+export type list_trace_netease_playlist = {
+    type: 'trace_netease_playlist',
+    id: string
+}
+export type playlistComponent = list_data | list_trace_bilibili_fav | list_trace_siren | list_trace_netease_playlist;
 export type list = {
     playlist: playlistComponent[]
 } & list_basic;
