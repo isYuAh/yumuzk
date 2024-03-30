@@ -169,6 +169,13 @@ function playSong({song, justtry = false}: playSongParams){
         }
         ZKStore.play.indexInPlaylist = findIndex;
     }
+    if (song.lrc) {
+        ZKStore.play.song.lrc = {
+            ...song.lrc,
+            status: 'enable',
+            lrc: []
+        }
+    }
     if (song.type === 'bilibili') {
         client.get('https://api.bilibili.com/x/web-interface/view', {
             params: {
@@ -273,7 +280,7 @@ function playSong({song, justtry = false}: playSongParams){
         })
     }else if (song.type === 'siren') {
         normalClient.get(`https://monster-siren.hypergryph.com/api/song/${song.cid}`).then(res => {
-            if (res.data.data.lyricUrl) {
+            if (ZKStore.play.song.lrc.status === 'disabled' && res.data.data.lyricUrl) {
                 ZKStore.play.song.lrc = {
                     status: 'enable',
                     type: 'web',
@@ -363,17 +370,19 @@ function playSong({song, justtry = false}: playSongParams){
                         })
                     }
                 }
-                normalClient.get(ZKStore.config.neteaseApi.url + 'lyric', {params: {id: song.id}}).then((res: AxiosResponse) => {
-                    if (res.data.lrc.lyric) {
-                        console.log(res.data.lrc);
-                        ZKStore.play.song.lrc = {
-                            status: 'enable',
-                            type: 'content',
-                            content: res.data.lrc.lyric,
-                            lrc: []
+                if (ZKStore.play.song.lrc.status === 'disabled') {
+                    normalClient.get(ZKStore.config.neteaseApi.url + 'lyric', {params: {id: song.id}}).then((res: AxiosResponse) => {
+                        if (res.data.lrc.lyric) {
+                            console.log(res.data.lrc);
+                            ZKStore.play.song.lrc = {
+                                status: 'enable',
+                                type: 'content',
+                                content: res.data.lrc.lyric,
+                                lrc: []
+                            }
                         }
-                    }
-                })
+                    })
+                }
             })
         }
     }

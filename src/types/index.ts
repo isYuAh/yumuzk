@@ -58,6 +58,7 @@ export type song_basic_w = {
     title?: string,
     singer?: string,
     pic?: string,
+    lrc?: song_lrcConfig
 }
 
 export type song_bilibili = {
