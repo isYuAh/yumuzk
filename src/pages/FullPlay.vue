@@ -83,7 +83,6 @@ import emitter from '@/emitter';
 import { inject, nextTick, ref, watch } from 'vue';
 import { minmax } from '@/utils/u';
 import { songInPlay, song_lrcConfig } from '@/types';
-import { tauri } from '@tauri-apps/api';
 import { AxiosResponse } from 'axios';
 import { normalClientInjectionKey } from '@/types';
 let ZKStore = useZKStore();
@@ -127,9 +126,10 @@ function changeVolumeProgress(e: any) {
 
 function updateHighlightedIndex() {
     // 遍历解析后的歌词数组
+    let offset = ZKStore.play.song.lrc.offset || 0;
     for (let i = 0; i < ZKStore.play.song.lrc.lrc.length; i++) {
         // 如果当前时间小于当前歌词的时间，说明当前播放到了下一句歌词
-        if (ZKStore.play.curTimeNum < ZKStore.play.song.lrc.lrc[i].time) {
+        if (ZKStore.play.curTimeNum + offset < ZKStore.play.song.lrc.lrc[i].time) {
             // 返回当前歌词的索引
             ZKStore.play.highlightLrcIndex = i - 1 >= 0 ? i - 1 : 0;
             return;
@@ -169,14 +169,54 @@ watch([() => ZKStore.play.highlightLrcIndex, () => ZKStore.play.song.lrc, () => 
 }, {deep: true})
 import { listen } from '@tauri-apps/api/event';
 import { WebviewWindow, appWindow } from '@tauri-apps/api/window';
+import { readTextFile } from '@tauri-apps/api/fs';
 listen('tauri://resize', freshLrcElement);
 
-function proceedLrc(lrc: song_lrcConfig) {
+async function proceedLrc(lrc: song_lrcConfig) {
     let url = '';
     if (lrc.type === 'web') {
         url = lrc.path
+        normalClient.get(url, {
+            responseType: 'text',
+        }).then((res: AxiosResponse) => {
+            let lines = res.data.split(/\r?\n/);
+            lrc.lrc = [];
+            lines.forEach((line: string) => {
+                const match = /\[(\d{2}):(\d{2}\.\d{2,4})\](.*)/.exec(line);
+                if (match) {
+                    // 提取时间和文字
+                    const minutes = parseInt(match[1], 10);
+                    const seconds = parseFloat(match[2]);
+                    const timeInSeconds = minutes * 60 + seconds;
+                    const text = match[3].trim();
+                    lrc.lrc.push({
+                        time: timeInSeconds,
+                        text: text,
+                    })
+                }
+            })
+            lrc.status = 'parsed';
+        })
     }else if (lrc.type === 'local') {
-        url = tauri.convertFileSrc(lrc.path);
+        let content = await readTextFile(lrc.path);
+        let lines = content.split(/\r?\n/);
+        lrc.lrc = [];
+        lines.forEach((line: string) => {
+            const match = /\[(\d{2}):(\d{2}\.\d{2,4})\](.*)/.exec(line);
+            if (match) {
+                // 提取时间和文字
+                const minutes = parseInt(match[1], 10);
+                const seconds = parseFloat(match[2]);
+                const timeInSeconds = minutes * 60 + seconds;
+                const text = match[3].trim();
+                lrc.lrc.push({
+                    time: timeInSeconds,
+                    text: text,
+                })
+            }
+        })
+        lrc.status = 'parsed';
+        return;
     }else if (lrc.type === 'content') {
         let lines = lrc.content.split(/\r?\n/);
         lrc.lrc = [];
@@ -197,27 +237,6 @@ function proceedLrc(lrc: song_lrcConfig) {
         lrc.status = 'parsed';
         return;
     }
-    normalClient.get(url, {
-        responseType: 'text',
-    }).then((res: AxiosResponse) => {
-        let lines = res.data.split(/\r?\n/);
-        lrc.lrc = [];
-        lines.forEach((line: string) => {
-            const match = /\[(\d{2}):(\d{2}\.\d{2,4})\](.*)/.exec(line);
-            if (match) {
-                // 提取时间和文字
-                const minutes = parseInt(match[1], 10);
-                const seconds = parseFloat(match[2]);
-                const timeInSeconds = minutes * 60 + seconds;
-                const text = match[3].trim();
-                lrc.lrc.push({
-                    time: timeInSeconds,
-                    text: text,
-                })
-            }
-        })
-        lrc.status = 'parsed';
-    })
 }
 watch(() => ZKStore.play.song.lrc, (nv) => {
     if (nv.status === 'enable') {

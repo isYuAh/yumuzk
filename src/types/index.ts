@@ -24,24 +24,23 @@ export type list = {
     playlist: playlistComponent[]
 } & list_basic;
 
-export type song_lrcConfig_web = {
+export type song_lrcConfig_basic = {
     status: string,
+    lrc: song_lrc,
+    offset: number
+}
+export type song_lrcConfig_web = {
     type: 'web',
     path: string,
-    lrc: song_lrc
-}
+} & song_lrcConfig_basic
 export type song_lrcConfig_local = {
-    status: string,
     type: 'local',
     path: string,
-    lrc: song_lrc
-}
+} & song_lrcConfig_basic
 export type song_lrcConfig_content = {
-    status: string,
     type: 'content',
     content: string,
-    lrc: song_lrc
-}
+} & song_lrcConfig_basic
 export type song_lrc_item = {
     time: number,
     text: string
