@@ -14,7 +14,7 @@
             </div>
                 <div class="singleLineTextEl title">{{ ZKStore.play.song.title }}</div>
             <div class="singleLineTextEl singer">{{ ZKStore.play.song.singer }}</div>
-            <div class="singleLineTextEl type">{{ ZKStore.play.song.type }}</div>
+            <div @dblclick="openOriginLink(parseOriginLink(ZKStore.play.song))" class="singleLineTextEl type">{{ ZKStore.play.song.type }}</div>
             <div class="playProgressTip">
                 <div class="cur">{{ ZKStore.play.curTime }}</div>
                 <div class="total">{{ ZKStore.play.durationTime }}</div>
@@ -82,7 +82,7 @@ import AroundTragetBorder from '@/components/AroundTargetBorder.vue'
 import emitter from '@/emitter';
 import { inject, nextTick, ref, watch } from 'vue';
 import { minmax } from '@/utils/u';
-import { song_lrcConfig } from '@/types';
+import { songInPlay, song_lrcConfig } from '@/types';
 import { tauri } from '@tauri-apps/api';
 import { AxiosResponse } from 'axios';
 import { normalClientInjectionKey } from '@/types';
@@ -93,6 +93,26 @@ let lrcContentEl = ref<HTMLDivElement>();
 let lrcContainerEl = ref<HTMLDivElement>();
 
 let normalClient = inject(normalClientInjectionKey)!;
+function openOriginLink(url: string) {
+    let originLinkWindow = new WebviewWindow("originLink", {
+        url: url,
+        decorations: true,
+        resizable: true,
+        center: true
+    })
+    originLinkWindow.show();
+}
+function parseOriginLink(song: songInPlay) {
+    if (song.origin.type === "bilibili") {
+        return `https://www.bilibili.com/video/${song.origin.BV}/`
+    }else if (song.origin.type === 'netease' || song.origin.type === 'netease_other' || song.origin.type === 'netease_outer') {
+        return `https://music.163.com/#/song?id=${song.origin.id}`
+    }else if (song.origin.type === 'siren') {
+        return `https://monster-siren.hypergryph.com/music/${song.origin.cid}`
+    }else {
+        return ''
+    }
+}
 
 function changePlayProgress(e: any) {
     if (playProgress.value) {
@@ -148,7 +168,7 @@ watch([() => ZKStore.play.highlightLrcIndex, () => ZKStore.play.song.lrc, () => 
     freshLrcElement();
 }, {deep: true})
 import { listen } from '@tauri-apps/api/event';
-import { appWindow } from '@tauri-apps/api/window';
+import { WebviewWindow, appWindow } from '@tauri-apps/api/window';
 listen('tauri://resize', freshLrcElement);
 
 function proceedLrc(lrc: song_lrcConfig) {

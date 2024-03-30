@@ -19,6 +19,10 @@
           "name": "node",
           "cmd": "node",
           "args": ["./res/neteaseapi/app.js"]
+        }, {
+          "name": "start",
+          "cmd": "start",
+          "args": ["**"]
         }]
       },
       "fs": {

@@ -156,7 +156,8 @@ function playSong(song: song){
             path: '',
             lrc: []
         },
-        url: ''
+        url: '',
+        origin: song,
     }
     let findIndex = -1;
     for (let i = 0; i < ZKStore.play.playlist.length; i++) {

@@ -102,7 +102,8 @@ export type songInPlay = {
     singer: string,
     type: string,
     url: string,
-    lrc: song_lrcConfig
+    lrc: song_lrcConfig,
+    origin: song
 }
 export const clientInjectionKey: InjectionKey<AxiosInstance> = Symbol()
 export const normalClientInjectionKey: InjectionKey<AxiosInstance> = Symbol()
