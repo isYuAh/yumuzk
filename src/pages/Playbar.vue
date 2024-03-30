@@ -400,7 +400,7 @@ function changeCurTimeTo(to: number) {
 
 function playPrevSong() {
     let si = ZKStore.play.indexInPlaylist;
-    if (si === 0) {
+    if (si <= 0 || si > ZKStore.play.playlist.length - 1) {
         playSong({song: ZKStore.play.playlist[ZKStore.play.playlist.length - 1]})
     }else {
         playSong({song: ZKStore.play.playlist[si - 1]});
@@ -408,7 +408,7 @@ function playPrevSong() {
 }
 function playNextSong() {
     let si = ZKStore.play.indexInPlaylist;
-    if (si === ZKStore.play.playlist.length - 1) {
+    if (si >= ZKStore.play.playlist.length - 1 || si < 0) {
         playSong({song: ZKStore.play.playlist[0]})
     }else {
         playSong({song :ZKStore.play.playlist[si + 1]});
