@@ -65,7 +65,7 @@
 import { inject, onUnmounted, ref, watch } from 'vue';
 import { tauri } from '@tauri-apps/api';
 import { AxiosError, AxiosResponse } from 'axios';
-import { clientInjectionKey, normalClientInjectionKey, type song } from '@/types';
+import { clientInjectionKey, normalClientInjectionKey, type playSongParams } from '@/types';
 import { minmax, secondsToMmss } from '@/utils/u';
 import { saveConfig, useZKStore } from '@/stores/useZKstore'
 import emitter from '@/emitter'
@@ -96,12 +96,12 @@ function playEnded() {
     }else if (ZKStore.play.mode === 'list') {
         let si = ZKStore.play.indexInPlaylist;
         if (si === ZKStore.play.playlist.length - 1) {
-            playSong(ZKStore.play.playlist[0])
+            playSong({song: ZKStore.play.playlist[0]})
         }else {
-            playSong(ZKStore.play.playlist[si + 1]);
+            playSong({song: ZKStore.play.playlist[si + 1]});
         }
     }else if (ZKStore.play.mode === 'rand') {
-        playSong(ZKStore.play.playlist[Math.floor(Math.random() * (ZKStore.play.playlist.length))])
+        playSong({song: ZKStore.play.playlist[Math.floor(Math.random() * (ZKStore.play.playlist.length))]})
     }else if (ZKStore.play.mode === 'loop') {
         songSource.value!.currentTime = 0;
         songSource.value!.play();
@@ -144,7 +144,7 @@ function changeVolume(e: any) {
         songSource.value.volume = toVolume;
     }
 }
-function playSong(song: song){
+function playSong({song, justtry = false}: playSongParams){
     ZKStore.play.song = {
         title: song.title,
         type: song.type,
@@ -159,14 +159,16 @@ function playSong(song: song){
         url: '',
         origin: song,
     }
-    let findIndex = -1;
-    for (let i = 0; i < ZKStore.play.playlist.length; i++) {
-        if (JSON.stringify(ZKStore.play.playlist[i]) === JSON.stringify(song)) {
-            findIndex = i;
-            break;
+    if (!justtry) {
+        let findIndex = -1;
+        for (let i = 0; i < ZKStore.play.playlist.length; i++) {
+            if (JSON.stringify(ZKStore.play.playlist[i]) === JSON.stringify(song)) {
+                findIndex = i;
+                break;
+            }
         }
+        ZKStore.play.indexInPlaylist = findIndex;
     }
-    ZKStore.play.indexInPlaylist = findIndex;
     if (song.type === 'bilibili') {
         client.get('https://api.bilibili.com/x/web-interface/view', {
             params: {
@@ -399,17 +401,17 @@ function changeCurTimeTo(to: number) {
 function playPrevSong() {
     let si = ZKStore.play.indexInPlaylist;
     if (si === 0) {
-        playSong(ZKStore.play.playlist[ZKStore.play.playlist.length - 1])
+        playSong({song: ZKStore.play.playlist[ZKStore.play.playlist.length - 1]})
     }else {
-        playSong(ZKStore.play.playlist[si - 1]);
+        playSong({song: ZKStore.play.playlist[si - 1]});
     }
 }
 function playNextSong() {
     let si = ZKStore.play.indexInPlaylist;
     if (si === ZKStore.play.playlist.length - 1) {
-        playSong(ZKStore.play.playlist[0])
+        playSong({song: ZKStore.play.playlist[0]})
     }else {
-        playSong(ZKStore.play.playlist[si + 1]);
+        playSong({song :ZKStore.play.playlist[si + 1]});
     }
 }
 watch(() => ZKStore.play.status, (nv) => {

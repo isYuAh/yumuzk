@@ -105,5 +105,11 @@ export type songInPlay = {
     lrc: song_lrcConfig,
     origin: song
 }
+
+export type playSongParams = {
+    song: song,
+    justtry?: boolean
+}
+
 export const clientInjectionKey: InjectionKey<AxiosInstance> = Symbol()
 export const normalClientInjectionKey: InjectionKey<AxiosInstance> = Symbol()

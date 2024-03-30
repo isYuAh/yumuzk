@@ -1,7 +1,7 @@
-import { song } from '@/types';
+import { type playSongParams } from '@/types';
 import mitt from 'mitt'
 const emitter = mitt<{
-    'playSong': song,
+    'playSong': playSongParams,
     'playPrevSong': void,
     'playNextSong': void,
     'changeVolumeTo': number,

@@ -29,7 +29,7 @@
             <input v-model="filter" class="search" placeholder="搜索" />
         </div>
         <div class="songs">
-            <div class="right">
+            <div class="container">
                 <simplebar data-auto-hide class="simplebar">
                     <div class="songTable forbidSelect">
                         <div 
@@ -55,21 +55,22 @@ import 'simplebar-vue/dist/simplebar.min.css'
 import { ref, toRaw } from 'vue';
 import { useZKStore } from '../stores/useZKstore';
 import emitter from '@/emitter';
+import '@/assets/songlist.css'
 let ZKStore = useZKStore();
 let filter = ref('');
 function playAll() {
     ZKStore.play.mode = 'list';
     ZKStore.play.playlist = structuredClone(toRaw(ZKStore.playlist.songs))
     if (ZKStore.play.playlist[0]) {
-        emitter.emit('playSong',ZKStore.play.playlist[0])
+        emitter.emit('playSong',{song: ZKStore.play.playlist[0]})
     }
 }
 function playSong_withCheck(song: song) {
     if (ZKStore.play.playlist.length) {
-        emitter.emit('playSong',song)
+        emitter.emit('playSong',{song})
     }else {
         ZKStore.play.playlist = structuredClone(toRaw(ZKStore.playlist.songs))
-        emitter.emit('playSong',song)
+        emitter.emit('playSong',{song})
     }
 }
 </script>
@@ -97,45 +98,6 @@ function playSong_withCheck(song: song) {
     height: 100%;
     display: flex;
     flex-direction: column;
-}
-.songs {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-}
-.songs .right {
-    flex: 1;
-}
-.simplebar {
-    height: 100%;
-}
-.songTable {
-    font-family: PingFang SC;
-    width: 100%;
-    display: grid;
-    grid-auto-rows: 38px;
-    color: #18191C;
-}
-.songTable .song {
-    padding: 7px 20px;
-    display: grid;
-    column-gap: 20px;
-    grid-template-columns: 12fr 10fr;
-    transition: background .15s;
-}
-.songTable .song:hover, .songTable .song.active {
-    background-color: #38393C;
-    /* background-color: #18191C; */
-    color: #fff;
-}
-.songTable .songInfo {
-    font-size: 15px;
-    display: inline-block;
-    line-height: 24px;
-    height: 24px;
-    word-break: break-all;
-    text-overflow: ellipsis;
-    overflow: hidden;
 }
 
 .listInfo {
@@ -246,11 +208,6 @@ function playSong_withCheck(song: song) {
 .transitionContainer {
     width: 100%;
     height: 100%;
-}
-.songInfo sub {
-    margin-left: 4px;
-    color: #666;
-    font-family: NovecentoWide;
 }
 </style>
 <!-- playBar -->

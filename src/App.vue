@@ -9,6 +9,7 @@
         <div v-show="!ZKStore.showFullPlay" class="tabs">
             <div @click="ZKStore.nowTab = 'Playlist'" :class="{tab: true, active: ZKStore.nowTab === 'Playlist'}">首页</div>
             <div @click="turnToPlaylistDetail" :class="{tab: true, active: ZKStore.nowTab === 'PlaylistDetail'}">歌单</div>
+            <div @click="ZKStore.nowTab = 'Search'" :class="{tab: true, active: ZKStore.nowTab === 'Search'}">搜索</div>
         </div>
       </Transition>
       <div class="controlbtn">
@@ -21,6 +22,7 @@
             <Playlist key="Playlist" v-if="ZKStore.nowTab === 'Playlist'"></Playlist>
             <PlaylistDetail key="PlaylistDetail" v-else-if="ZKStore.nowTab === 'PlaylistDetail'"></PlaylistDetail>
             <Loading key="Loading" v-else-if="ZKStore.nowTab === 'Loading'"</Loading>
+            <Search key="Search" v-else-if="ZKStore.nowTab === 'Search'"</Search>
         </Transition>
     </div>
     <Playbar></Playbar>
@@ -44,6 +46,7 @@ import PlaylistDetail from './pages/PlaylistDetail.vue';
 import Loading from '@/pages/Loading.vue'
 import FullPlay from '@/pages/FullPlay.vue'
 import Playbar from '@/pages/Playbar.vue'
+import Search from '@/pages/Search.vue'
 import { resourceDir } from '@tauri-apps/api/path';
 import { minmax } from './utils/u';
 import emitter from './emitter';
