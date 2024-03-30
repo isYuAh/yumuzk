@@ -53,17 +53,22 @@
                         </div>
                     </Transition>
                 </div>
+                <div
+                v-show="ZKStore.play.song.lrc.status !== 'disabled' && ZKStore.play.song.lrc.status !== 'disabled'"
+                @click="toggleTranslation" class="translate">
+                    <svg t="1711805276586" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5600"><path d="M661.333333 725.333333c-17.066667 0-32-8.533333-38.4-25.6L586.666667 618.666667h-149.333334l-36.266666 81.066666c-8.533333 21.333333-34.133333 32-55.466667 21.333334-21.333333-8.533333-32-34.133333-21.333333-55.466667l46.933333-106.666667v-2.133333l102.4-234.666667c6.4-14.933333 21.333333-25.6 38.4-25.6s32 10.666667 38.4 25.6l102.4 234.666667v2.133333l46.933333 106.666667c8.533333 21.333333 0 46.933333-21.333333 55.466667-6.4 2.133333-10.666667 4.266667-17.066667 4.266666z m-187.733333-192h74.666667L512 448l-38.4 85.333333z" fill="#333333" p-id="5601"></path><path d="M921.6 469.333333c-19.2 0-38.4-14.933333-42.666667-34.133333C842.666667 258.133333 684.8 128 503.466667 128 347.733333 128 211.2 221.866667 151.466667 360.533333l49.066666-17.066666c21.333333-6.4 46.933333 4.266667 53.333334 27.733333 6.4 21.333333-4.266667 46.933333-27.733334 53.333333l-128 42.666667c-14.933333 4.266667-29.866667 2.133333-42.666666-8.533333-10.666667-10.666667-14.933333-25.6-12.8-40.533334C87.466667 200.533333 281.6 42.666667 503.466667 42.666667s416 157.866667 460.8 375.466666c4.266667 23.466667-10.666667 44.8-34.133334 51.2h-8.533333zM503.466667 981.333333C281.6 981.333333 87.466667 823.466667 42.666667 605.866667c-4.266667-23.466667 10.666667-44.8 34.133333-51.2 23.466667-4.266667 44.8 10.666667 51.2 34.133333C164.266667 765.866667 322.133333 896 503.466667 896c153.6 0 290.133333-91.733333 349.866666-226.133333l-27.733333 10.666666c-21.333333 8.533333-46.933333-2.133333-55.466667-23.466666-8.533333-21.333333 2.133333-46.933333 23.466667-55.466667l110.933333-42.666667c14.933333-6.4 32-2.133333 42.666667 6.4 12.8 10.666667 17.066667 25.6 14.933333 40.533334C919.466667 823.466667 725.333333 981.333333 503.466667 981.333333z" fill="currentColor" p-id="5602"></path></svg>
+                </div>
             </div>
         </AroundTragetBorder>
     </div>
     <div class="right">
         <Transition name="uianim">
-            <div v-if="ZKStore.play.song.lrc.status === 'parsed'" ref="lrcContentEl" class="lrcContent">
+            <div v-if="LRC.status === 'parsed'" ref="lrcContentEl" class="lrcContent">
                 <div ref="lrcContainerEl" class="lrcContainer">
-                    <div v-for="l, i in ZKStore.play.song.lrc.lrc" :class="{lrcItem: true, active: i === ZKStore.play.highlightLrcIndex}">{{ l.text }}</div>
+                    <div v-for="l, i in LRC.lrc" :class="{lrcItem: true, active: i === ZKStore.play.highlightLrcIndex}">{{ l.text }}</div>
                 </div>
             </div>
-            <div v-else-if="ZKStore.play.song.lrc.status !== 'parsed'" class="lrcStatus">
+            <div v-else-if="LRC.status !== 'parsed'" class="lrcStatus">
                 <div class="status">「 No lrc 」</div>
             </div>
         </Transition>
@@ -80,7 +85,7 @@
 import { useZKStore } from '@/stores/useZKstore';
 import AroundTragetBorder from '@/components/AroundTargetBorder.vue'
 import emitter from '@/emitter';
-import { inject, nextTick, ref, watch } from 'vue';
+import { computed, inject, nextTick, ref, watch } from 'vue';
 import { minmax } from '@/utils/u';
 import { songInPlay, song_lrcConfig } from '@/types';
 import { AxiosResponse } from 'axios';
@@ -90,6 +95,13 @@ let playProgress = ref<HTMLDivElement>();
 let volumeProgress = ref<HTMLDivElement>();
 let lrcContentEl = ref<HTMLDivElement>();
 let lrcContainerEl = ref<HTMLDivElement>();
+let LRC = computed(() => {
+    if (ZKStore.play.lang === 'translation' && ZKStore.play.song.translationLrc.status !== 'disabled') {
+        return ZKStore.play.song.translationLrc
+    }else {
+        return ZKStore.play.song.lrc
+    }
+})
 
 let normalClient = inject(normalClientInjectionKey)!;
 function openOriginLink(url: string) {
@@ -126,18 +138,25 @@ function changeVolumeProgress(e: any) {
 
 function updateHighlightedIndex() {
     // 遍历解析后的歌词数组
-    let offset = ZKStore.play.song.lrc.offset || 0;
-    for (let i = 0; i < ZKStore.play.song.lrc.lrc.length; i++) {
+    let offset = LRC.value.offset || 0;
+    for (let i = 0; i < LRC.value.lrc.length; i++) {
         // 如果当前时间小于当前歌词的时间，说明当前播放到了下一句歌词
-        if (ZKStore.play.curTimeNum + offset < ZKStore.play.song.lrc.lrc[i].time) {
+        if (ZKStore.play.curTimeNum + offset < LRC.value.lrc[i].time) {
             // 返回当前歌词的索引
             ZKStore.play.highlightLrcIndex = i - 1 >= 0 ? i - 1 : 0;
             return;
         }
     }
     // 如果当前时间大于最后一句歌词的时间，则返回最后一句歌词的索引
-    ZKStore.play.highlightLrcIndex = ZKStore.play.song.lrc.lrc.length - 1;
+    ZKStore.play.highlightLrcIndex = LRC.value.lrc.length - 1;
     return;
+}
+function toggleTranslation() {
+    if (ZKStore.play.lang === 'origin') {
+        ZKStore.play.lang = 'translation'
+    }else {
+        ZKStore.play.lang = 'origin'
+    }
 }
 emitter.on('updateActiveLrcIndex', updateHighlightedIndex)
 async function freshLrcElement() {
@@ -238,9 +257,11 @@ async function proceedLrc(lrc: song_lrcConfig) {
         return;
     }
 }
-watch(() => ZKStore.play.song.lrc, (nv) => {
-    if (nv.status === 'enable') {
-        proceedLrc(nv)
+watch([() => ZKStore.play.song.lrc, () => {ZKStore.play.song.translationLrc}, () => ZKStore.play.lang], () => {
+    if (ZKStore.play.lang === 'translation' && ZKStore.play.song.translationLrc.status !== 'disabled') {
+        proceedLrc(ZKStore.play.song.translationLrc)
+    }else if (ZKStore.play.song.lrc) {
+        proceedLrc(ZKStore.play.song.lrc)
     }
 })
 
@@ -358,6 +379,13 @@ watch(() => ZKStore.play.song.lrc, (nv) => {
     display: flex;
 }
 .partContainer .left .controlButtons .playbutton {
+    width: 24px;
+    height: 24px;
+    color: #444;
+    margin: 0 20px;
+}
+
+.partContainer .left .controlButtons .translate {
     width: 24px;
     height: 24px;
     color: #444;

@@ -27,7 +27,7 @@ export type list = {
 export type song_lrcConfig_basic = {
     status: string,
     lrc: song_lrc,
-    offset: number
+    offset?: number
 }
 export type song_lrcConfig_web = {
     type: 'web',
@@ -51,13 +51,8 @@ export type song_basic = {
     title: string,
     singer: string,
     pic?: string,
-    lrc?: song_lrcConfig
-}
-export type song_basic_w = {
-    title?: string,
-    singer?: string,
-    pic?: string,
-    lrc?: song_lrcConfig
+    lrc?: song_lrcConfig,
+    translationLrc?: song_lrcConfig
 }
 
 export type song_bilibili = {
@@ -103,7 +98,8 @@ export type songInPlay = {
     type: string,
     url: string,
     lrc: song_lrcConfig,
-    origin: song
+    origin: song,
+    translationLrc: song_lrcConfig
 }
 
 export type playSongParams = {

@@ -31,10 +31,18 @@ export const useZKStore = defineStore('ZK', {
           status: 'disabled',
           type: 'local',
           path: '',
-          lrc: []
-        }
+          lrc: [],
+        },
+        translationLrc: {
+          status: 'disabled',
+          type: 'local',
+          path: '',
+          lrc: [],
+        },
+        origin: null as any
       },
       curTime: '',
+      lang: 'origin',
       curTimeNum: 0,
       durationTime: '',
       duration: 0,

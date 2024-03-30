@@ -158,7 +158,14 @@ function playSong({song, justtry = false}: playSongParams){
         },
         url: '',
         origin: song,
+        translationLrc: {
+            status: 'disabled',
+            type: 'web',
+            path: '',
+            lrc: []
+        }
     }
+    ZKStore.play.lang = 'origin';
     if (!justtry) {
         let findIndex = -1;
         for (let i = 0; i < ZKStore.play.playlist.length; i++) {
@@ -172,6 +179,13 @@ function playSong({song, justtry = false}: playSongParams){
     if (song.lrc) {
         ZKStore.play.song.lrc = {
             ...song.lrc,
+            status: 'enable',
+            lrc: []
+        }
+    }
+    if (song.translationLrc) {
+        ZKStore.play.song.translationLrc = {
+            ...song.translationLrc,
             status: 'enable',
             lrc: []
         }
@@ -370,14 +384,23 @@ function playSong({song, justtry = false}: playSongParams){
                         })
                     }
                 }
-                if (ZKStore.play.song.lrc.status === 'disabled') {
+                if (ZKStore.play.song.lrc.status === 'disabled' || ZKStore.play.song.translationLrc.status === 'disabled') {
                     normalClient.get(ZKStore.config.neteaseApi.url + 'lyric', {params: {id: song.id}}).then((res: AxiosResponse) => {
-                        if (res.data.lrc.lyric) {
+                        if (res.data.lrc.lyric && ZKStore.play.song.lrc.status === 'disabled') {
                             console.log(res.data.lrc);
                             ZKStore.play.song.lrc = {
                                 status: 'enable',
                                 type: 'content',
                                 content: res.data.lrc.lyric,
+                                lrc: []
+                            }
+                        }
+                        if (res.data.tlyric.lyric && ZKStore.play.song.translationLrc.status === 'disabled') {
+                            console.log(res.data.tlyric);
+                            ZKStore.play.song.translationLrc = {
+                                status: 'enable',
+                                type: 'content',
+                                content: res.data.tlyric.lyric,
                                 lrc: []
                             }
                         }
