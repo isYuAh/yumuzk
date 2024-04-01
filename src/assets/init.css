@@ -23,6 +23,11 @@
     src:
         url("./Novecento-Wide-Bold-2.otf");
 }
+@font-face {
+    font-family: "FZTYSJ";
+    src:
+        url("./FangZhengTeYaSongJian.ttf");
+}
 
 * {
     box-sizing: border-box;

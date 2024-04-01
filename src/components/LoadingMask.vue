@@ -23,7 +23,7 @@ defineProps<{
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 999;
+    z-index: 101;
     transition: all .2s;
     background-color: transparent;
     pointer-events: none;

@@ -1,11 +1,13 @@
 <template>
-<RouterView></RouterView>
+123
 </template>
 
 <script setup lang='ts'>
-import { RouterView } from 'vue-router';
+
 </script>
 
 <style scoped>
-
+body {
+    background-color: #fff;
+}
 </style>

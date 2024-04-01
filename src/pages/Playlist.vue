@@ -1,12 +1,21 @@
 <template>
 <div class="partContainer forbidSelect">
-    <div @click="checkDetail(index)" v-for="list, index in useZKStore().playlists" class="item">
-        <TargetBorder>
-            <div class="img">
-                <img referrerpolicy="no-referrer" :src="list.pic" alt="">
-            </div>
-        </TargetBorder>
-        <div class="title">{{ list.title }}</div>
+    <Transition name="uianim">
+        <div class="playlistControllers">
+            <button @click="importPlaylist" class="controllerButton import">导入</button>
+            <button @click="emitter.emit('refreshPlaylists')" class="controllerButton import">刷新</button>
+            <button @click="testFunc" class="controllerButton test">测试</button>
+        </div>
+    </Transition>
+    <div class="lists">
+        <div @click="checkDetail(index)" v-for="list, index in useZKStore().playlists" class="item">
+            <TargetBorder>
+                <div class="img">
+                    <img referrerpolicy="no-referrer" :src="list.pic" alt="">
+                </div>
+            </TargetBorder>
+            <div class="title">{{ list.title }}</div>
+        </div>
     </div>
 </div>
 </template>
@@ -17,7 +26,12 @@ import { clientInjectionKey, list_trace_bilibili_fav, playlistComponent } from '
 import { inject } from 'vue';
 import { normalClientInjectionKey } from '../types';
 import { type song } from '../types';
+import { ask, open } from '@tauri-apps/api/dialog';
+import { copyFile, exists } from '@tauri-apps/api/fs'
 import TargetBorder from '../components/TargetBorder.vue'
+import path from 'path-browserify';
+import emitter from '@/emitter';
+import { showMsg } from '@/utils/u';
 let client = inject(clientInjectionKey)!;
 let normalClient = inject(normalClientInjectionKey)!;
 let ZKStore = useZKStore();
@@ -113,10 +127,60 @@ function checkDetail(index: number) {
         parseComponent(comIndex, components);
     }
 }
+function importPlaylist() {
+    open({
+        filters: [{
+            name: '歌单文件',
+            extensions: ['json']
+        },{
+            name: '所有文件',
+            extensions: ['*']
+        }
+        ]
+    }).then((fn: any) => {
+        if (ZKStore.resourceDir) {
+            fn = fn.replaceAll('\\', '/')
+            exists(ZKStore.resourceDir + 'res/lists/' + path.basename(fn)).then((val: boolean) => {
+                if (val) {
+                    ask('文件已存在，是否覆盖？').then((choice: boolean) => {
+                        if (choice) {
+                            copyFile(fn, ZKStore.resourceDir + 'res/lists/' + path.basename(fn)).catch((reason: any) => {
+                                showMsg(ZKStore.message, 4000, reason);
+                            })
+                            emitter.emit('refreshPlaylists')
+                        }
+                    })
+                }else {
+                    copyFile(fn, ZKStore.resourceDir + 'res/lists/' + path.basename(fn)).catch((reason: any) => {
+                        showMsg(ZKStore.message, 4000, reason);
+                    })
+                    emitter.emit('refreshPlaylists')
+                }
+            }).catch((reason: any) => {
+                showMsg(ZKStore.message, 4000, reason);
+            })
+        }else {
+            showMsg(ZKStore.message, 4000, '错误: resourceDir不存在');
+        }
+    })
+}
+function testFunc() {
+    ask('123').then((value: boolean) => {
+        console.log(value);
+    })
+}
 </script>
 
 <style scoped>
 .partContainer {
+    display: flex;
+    flex-direction: column;
+}
+.partContainer .playlistControllers {
+    padding: 10px 20px 0;
+}
+.partContainer .lists {
+    flex: 1;
     display: grid;
     padding: 20px;
     gap: 20px;
@@ -155,5 +219,21 @@ function checkDetail(index: number) {
 }
 .item:hover .img img {
     transform: scale(1.03);
+}
+
+.controllerButton {
+    cursor: pointer;
+    font-family: FZTYSJ;
+    font-size: 22px;
+    background-color: rgba(0, 0, 0, .9);
+    box-shadow: 0 0 7px rgba(0, 0, 0, .3);
+    border: none;
+    color: #fff;
+    padding: 5px 10px;
+    margin: 0 10px;
+    transition: all .25s;
+}
+.controllerButton:hover {
+    box-shadow: 0 0 7px rgba(0, 0, 0, .6);
 }
 </style>

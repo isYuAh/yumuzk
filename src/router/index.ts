@@ -1,21 +1,21 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
-import List from '../pages/List.vue';
-import songList from '../pages/songList.vue';
+import App from '@/pages/App.vue';
+import Confirm from '@/dialogPages/confirm.vue';
 
 const routes: Array<RouteRecordRaw> = [
   {
-    path: '/list',
-    name: 'List',
-    component: List
-  },
-  {
-    path: '/songlist',
-    name: 'songlist',
-    component: songList
-  },
-  {
     path: '/',
-    redirect: '/list'
+    component: App
+  },
+  {
+    path: '/dialog',
+    children: [
+      {
+        name: 'dialog-confirm',
+        path: 'confirm',
+        component: Confirm
+      }
+    ]
   }
 ];
 

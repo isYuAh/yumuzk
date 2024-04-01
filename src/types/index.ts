@@ -3,6 +3,7 @@ import { InjectionKey } from "vue";
 export type list_basic = {
     pic: string,
     title: string,
+    intro?: string
 }
 export type list_data = {
     type: 'data'
@@ -105,6 +106,12 @@ export type songInPlay = {
 export type playSongParams = {
     song: song,
     justtry?: boolean
+}
+
+export type messageController = {
+    show: boolean,
+    text: string,
+    timer: NodeJS.Timeout,
 }
 
 export const clientInjectionKey: InjectionKey<AxiosInstance> = Symbol()

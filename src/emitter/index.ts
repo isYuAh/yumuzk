@@ -6,6 +6,7 @@ const emitter = mitt<{
     'playNextSong': void,
     'changeVolumeTo': number,
     'changeCurTimeTo': number,
-    'updateActiveLrcIndex': void
+    'updateActiveLrcIndex': void,
+    'refreshPlaylists': void
 }>();
 export default emitter;

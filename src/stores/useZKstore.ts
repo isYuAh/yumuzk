@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import type {list, song, songInPlay, song_lrc_item} from '../types'
+import type {list, messageController, song, songInPlay, song_lrc_item} from '../types'
 import { BaseDirectory, writeTextFile } from '@tauri-apps/api/fs';
 export function saveConfig() {
   writeTextFile('res/config.json', JSON.stringify(useZKStore().config), {dir: BaseDirectory.Resource})
@@ -13,6 +13,12 @@ export const useZKStore = defineStore('ZK', {
     loading: {
       text: '',
     },
+    message: <messageController>{
+      show: false,
+      text: '',
+      timer: <NodeJS.Timeout>(null as any),
+    },
+    resourceDir: '',
     showFullPlay: false,
     playlist: {
       listIndex: -1,
