@@ -31,6 +31,9 @@
                             v-for="song in resultList">
                             <div class="songInfo title">{{ song.title }}<sub>{{ song.type }}</sub></div>
                             <div class="songInfo author">{{ song.singer }}</div>
+                            <div @click="dealSearchResultSong($event, song)" class="songInfo deal"> <!-- 操作 -->
+                                <svg fill="currentColor" t="1712052325059" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="6676" width="24" height="24"><path d="M0 465.454545l1024 0 0 93.090909-1024 0 0-93.090909Z" p-id="6677"></path><path d="M465.454545 0l93.090909 0 0 1024-93.090909 0 0-1024Z" p-id="6678"></path></svg>
+                            </div>
                         </div>
                     </div>
                 </simplebar>
@@ -42,7 +45,7 @@
 </template>
 
 <script setup lang='ts'>
-import { ref, inject } from "vue";
+import { ref, inject, toRaw, shallowRef } from "vue";
 import '@/assets/songlist.css'
 import simplebar from "simplebar-vue";
 import 'simplebar-vue/dist/simplebar.min.css'
@@ -51,6 +54,9 @@ import { AxiosResponse } from "axios";
 import LoadingMask from '@/components/LoadingMask.vue'
 import Pagination from '@/components/Pagination.vue'
 import emitter from "@/emitter";
+import { useZKStore } from "@/stores/useZKstore";
+import CollectDialog from "@/components/CollectDialog.vue";
+let ZKStore = useZKStore();
 let searchInput = ref<HTMLInputElement>();
 let normalClient = inject(normalClientInjectionKey)!;
 let resultList = ref<song[]>([])
@@ -146,6 +152,11 @@ function refreshSuggests () {
         })
     }
 }
+function dealSearchResultSong(_e:any, song: song) {
+    ZKStore.dialogData.waitCollect = toRaw(song);
+    ZKStore.dialog.dialogEl = shallowRef(CollectDialog);
+    ZKStore.dialog.show = true;
+}
 </script>
 
 <style scoped>
@@ -218,5 +229,11 @@ function refreshSuggests () {
     width: 100%;
     height: 100%;
     min-height: 0;
+}
+.songTable .song {
+    grid-template-columns: 12fr 10fr 50px;
+}
+.songTable .song .deal {
+    cursor: pointer;
 }
 </style>

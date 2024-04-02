@@ -36,9 +36,13 @@
                             v-show="song.title.includes(filter) || song.singer.includes(filter)" 
                             @dblclick="playSong_withCheck(song)" 
                             class="song" 
+                            :data-song="song"
                             v-for="song in ZKStore.playlist.songs">
                             <div class="songInfo title">{{ song.title }}<sub>{{ song.type }}</sub></div>
                             <div class="songInfo author">{{ song.singer }}</div>
+                            <div @click="dealPlaylistSong($event, song)" class="songInfo deal"> <!-- 操作 -->
+                                <svg t="1712050742331" class="icon" viewBox="0 0 1024 1024" fill="currentColor" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5232" width="24" height="24"><path d="M232 511m-56 0a56 56 0 1 0 112 0 56 56 0 1 0-112 0Z" p-id="5233"></path><path d="M512 511m-56 0a56 56 0 1 0 112 0 56 56 0 1 0-112 0Z" p-id="5234"></path><path d="M792 511m-56 0a56 56 0 1 0 112 0 56 56 0 1 0-112 0Z" p-id="5235"></path></svg>
+                            </div>
                         </div>
                     </div>
                 </simplebar>
@@ -72,6 +76,9 @@ function playSong_withCheck(song: song) {
         ZKStore.play.playlist = structuredClone(toRaw(ZKStore.playlist.songs))
         emitter.emit('playSong',{song})
     }
+}
+function dealPlaylistSong (e: any, song: song) {
+    console.log(e, song);
 }
 </script>
 
@@ -208,6 +215,12 @@ function playSong_withCheck(song: song) {
 .transitionContainer {
     width: 100%;
     height: 100%;
+}
+.songTable .song {
+    grid-template-columns: 12fr 10fr 50px;
+}
+.songTable .song .deal {
+    cursor: pointer;
 }
 </style>
 <!-- playBar -->

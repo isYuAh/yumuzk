@@ -3,7 +3,8 @@ import { InjectionKey } from "vue";
 export type list_basic = {
     pic: string,
     title: string,
-    intro?: string
+    intro?: string,
+    originFilename: string
 }
 export type list_data = {
     type: 'data'

@@ -29,9 +29,11 @@ import { type song } from '../types';
 import { ask, open } from '@tauri-apps/api/dialog';
 import { copyFile, exists } from '@tauri-apps/api/fs'
 import TargetBorder from '../components/TargetBorder.vue'
+//@ts-ignore
 import path from 'path-browserify';
 import emitter from '@/emitter';
 import { showMsg } from '@/utils/u';
+import { WebviewWindow } from '@tauri-apps/api/window';
 let client = inject(clientInjectionKey)!;
 let normalClient = inject(normalClientInjectionKey)!;
 let ZKStore = useZKStore();
@@ -165,9 +167,13 @@ function importPlaylist() {
     })
 }
 function testFunc() {
-    ask('123').then((value: boolean) => {
-        console.log(value);
+    let confirm = new WebviewWindow('confirm', {
+        decorations: false,
+        resizable: false,
+        url:'/dialog/confirm',
+        transparent: true
     })
+    confirm.show();
 }
 </script>
 

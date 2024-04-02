@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia';
 import type {list, messageController, song, songInPlay, song_lrc_item} from '../types'
 import { BaseDirectory, writeTextFile } from '@tauri-apps/api/fs';
+import CollectDialog from '@/components/CollectDialog.vue';
+import { shallowRef } from 'vue';
 export function saveConfig() {
   writeTextFile('res/config.json', JSON.stringify(useZKStore().config), {dir: BaseDirectory.Resource})
 }
@@ -12,6 +14,13 @@ export const useZKStore = defineStore('ZK', {
     nowTab: 'Playlist',
     loading: {
       text: '',
+    },
+    dialog: {
+      show: false,
+      dialogEl: shallowRef(CollectDialog) as any,
+    },
+    dialogData: {
+      waitCollect: <song>(null as any),
     },
     message: <messageController>{
       show: false,

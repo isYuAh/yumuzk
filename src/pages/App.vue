@@ -1,5 +1,10 @@
 <template>
   <Transition name="uianim">
+    <Dialog>
+      <Component :is="ZKStore.dialog.dialogEl" />
+    </Dialog>
+  </Transition>
+  <Transition name="uianim">
     <FullPlay v-show="ZKStore.showFullPlay"></FullPlay>
   </Transition>
   <div class="container">
@@ -40,7 +45,7 @@ import { useZKStore, saveConfig } from '@/stores/useZKstore'
 import axios from 'axios';
 import axiosTauriApiAdapter from 'axios-tauri-api-adapter';
 import { clientInjectionKey, normalClientInjectionKey, song } from '@/types';
-import { onMounted, onUnmounted, provide, watch } from 'vue';
+import { onMounted, onUnmounted, provide, shallowRef, watch } from 'vue';
 import { WBI } from '@/WBI';
 import Playlist from '@/pages/Playlist.vue';
 import PlaylistDetail from '@/pages/PlaylistDetail.vue';
@@ -49,6 +54,7 @@ import FullPlay from '@/pages/FullPlay.vue'
 import Playbar from '@/pages/Playbar.vue'
 import Search from '@/pages/Search.vue'
 import Message from '@/components/Message.vue';
+import Dialog from '@/components/Dialog.vue'
 import { minmax } from '@/utils/u';
 import emitter from '@/emitter';
 import { path } from '@tauri-apps/api';
@@ -72,6 +78,8 @@ const normalClient = axios.create({
   },
   signal: axiosController.signal
 });
+import CollectDialog from '@/components/CollectDialog.vue'
+ZKStore.dialog.dialogEl = shallowRef(CollectDialog);
 // normalClient.interceptors.response.use(function (response) {
 //     return response;
 //   }, function (error) {
@@ -112,6 +120,7 @@ client.get('https://api.bilibili.com/x/web-interface/nav').then(res => {
 
 onMounted(() => {
   readTextFile("res/config.json", {dir: BaseDirectory.Resource}).then(res => {
+    console.log(res);
     if (res) {
       ZKStore.config = JSON.parse(res);
       if (ZKStore.config.volume != undefined) {
@@ -137,7 +146,7 @@ provide(normalClientInjectionKey, normalClient);
     ZKStore.playlists = await Promise.all(
       files.filter(f => {
         return f.path.substring(f.path.lastIndexOf('.')) === '.json'
-      }).map(async (file: FileEntry) => JSON.parse(await readTextFile(file.path))))
+      }).map(async (file: FileEntry) => ({...JSON.parse(await readTextFile(file.path)), originFilename: file.path.substring(file.path.lastIndexOf('\\') + 1)})))
   }
   readDir(`res/lists`, {dir: BaseDirectory.Resource}).then(res => {
     {
