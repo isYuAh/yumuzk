@@ -4,6 +4,8 @@
     @ended="playEnded"
     @timeupdate="updateTime"
     @volumechange="changeVolumeInfo"
+    @play="whenPlay"
+    @pause="whenPause"
     autoplay ref="songSource"></video>
 </div>
 <div class="play forbidSelect">
@@ -66,9 +68,11 @@ import { inject, onUnmounted, ref, watch } from 'vue';
 import { tauri } from '@tauri-apps/api';
 import { AxiosError, AxiosResponse } from 'axios';
 import { clientInjectionKey, normalClientInjectionKey, type playSongParams } from '@/types';
-import { minmax, secondsToMmss } from '@/utils/u';
+import { minmax, secondsToMmss, getFormattedDateWithPadding } from '@/utils/u';
 import { saveConfig, useZKStore } from '@/stores/useZKstore'
 import emitter from '@/emitter'
+//@ts-ignore
+import md5 from 'md5'
 //@ts-ignore
 import Netease from '../utils/netease/netease.js'
 let songSource = ref<HTMLVideoElement>();
@@ -82,7 +86,16 @@ let songInformation = ref<HTMLDivElement>();
 let client = inject(clientInjectionKey)!;
 let normalClient = inject(normalClientInjectionKey)!;
 // let lrcConfig = ref<song_lrc_item[]>([])
-
+function whenPlay() {
+  if (ZKStore.play.status !== 'play') {
+    ZKStore.play.status = 'play';
+  }
+}
+function whenPause() {
+  if (ZKStore.play.status !== 'pause') {
+    ZKStore.play.status = 'pause';
+  }
+}
 function changeVolumeInfo() {
     if (songSource.value) {
         ZKStore.play.volume = songSource.value.volume;
@@ -341,75 +354,115 @@ function playSong({song, justtry = false}: playSongParams){
                 }
             })
         }else {
-            normalClient.get(ZKStore.config.neteaseApi.url + 'song/url', {params: {
-              id: song.id,
-              cookie: ZKStore.neteaseUser.cookie
-            }}).then (res => {
-                if (res.data.data[0]) {
-                    if (songSource.value) {
-                        ZKStore.play.song.url = res.data.data[0].url;
-                        songSource.value.src = ZKStore.play.song.url;
-                    }
+          let rawDetail = {} as any;
+          normalClient.get(ZKStore.config.neteaseApi.url + 'song/detail', {params: {ids: song.id}}).then((res: AxiosResponse) => {
+            rawDetail = res.data;
+            if (songfaceImg.value) {
+              if (song.pic) {
+                ZKStore.play.show_songface = true;
+                songfaceImg.value.src = song.pic
+              }else {
+                if (res.data.songs[0].al.picUrl) {
+                  ZKStore.play.show_songface = true;
+                  ZKStore.play.song.pic = res.data.songs[0].al.picUrl;
+                  songfaceImg.value!.src = res.data.songs[0].al.picUrl
+                }else {
+                  ZKStore.play.show_songface = false;
                 }
-            }).catch((err: AxiosError) => {
-                if (err.response?.status === 404) {
-                    if (songSource.value) {
-                        ZKStore.play.song.url = `http://music.163.com/song/media/outer/url?id=${song.id}.mp3`;
-                        songSource.value.src = ZKStore.play.song.url;
-                    }
-                    console.log('使用outerAPI请求歌曲');
-                };
-            }).finally(() => {
-                if (songfaceImg.value) {
-                    if (song.pic) {
-                        ZKStore.play.show_songface = true;
-                        songfaceImg.value.src = song.pic
-                    }else {
-                        normalClient.get(ZKStore.config.neteaseApi.url + 'song/detail', {params: {ids: song.id}}).then((res: AxiosResponse) => {
-                            if (res.data.songs[0].al.picUrl) {
-                                ZKStore.play.show_songface = true;
-                                ZKStore.play.song.pic = res.data.songs[0].al.picUrl;
-                                songfaceImg.value!.src = res.data.songs[0].al.picUrl
-                            }else {
-                                ZKStore.play.show_songface = false;
-                            }
-                        }).catch(() => {
-                            console.log('使用NeteaseWebAPI请求详细信息');
-                            Netease.getSongDetail(normalClient, song.id).then((res: any) => {
-                                if (res.data.songs[0].al.picUrl) {
-                                    ZKStore.play.show_songface = true;
-                                    ZKStore.play.song.pic = res.data.songs[0].al.picUrl;
-                                    songfaceImg.value!.src = res.data.songs[0].al.picUrl
-                                }else {
-                                    ZKStore.play.show_songface = false;
-                                }
-                            })
-                        })
-                    }
-                }
-                if (ZKStore.play.song.lrc.status === 'disabled' || ZKStore.play.song.translationLrc.status === 'disabled') {
-                    normalClient.get(ZKStore.config.neteaseApi.url + 'lyric', {params: {id: song.id}}).then((res: AxiosResponse) => {
-                        if (res.data.lrc.lyric && ZKStore.play.song.lrc.status === 'disabled') {
-                            console.log(res.data.lrc);
-                            ZKStore.play.song.lrc = {
-                                status: 'enable',
-                                type: 'content',
-                                content: res.data.lrc.lyric,
-                                lrc: []
-                            }
-                        }
-                        if (res.data.tlyric.lyric && ZKStore.play.song.translationLrc.status === 'disabled') {
-                            console.log(res.data.tlyric);
-                            ZKStore.play.song.translationLrc = {
-                                status: 'enable',
-                                type: 'content',
-                                content: res.data.tlyric.lyric,
-                                lrc: []
-                            }
-                        }
-                    })
-                }
+              }
+            }
+          }).catch(() => {
+            console.log('使用NeteaseWebAPI请求详细信息');
+            Netease.getSongDetail(normalClient, song.id).then((res: any) => {
+              rawDetail = res.data;
+              if (res.data.songs[0].al.picUrl) {
+                ZKStore.play.show_songface = true;
+                ZKStore.play.song.pic = res.data.songs[0].al.picUrl;
+                songfaceImg.value!.src = res.data.songs[0].al.picUrl
+              }else {
+                ZKStore.play.show_songface = false;
+              }
             })
+          }).finally(() => {
+            let md5Str = md5(getFormattedDateWithPadding() + `https://music.163.com/#/song?id=${song.id}exhighmusiccn_v1`);
+            if (rawDetail.privileges[0].chargeInfoList[0].chargeType != 0 && ZKStore.neteaseUser.vipType == '0') {
+              let max = 5;
+              let tryOnce = () => {
+                max--;
+                normalClient.post('https://api.toubiec.cn/api/music_v1.php', {
+                  "url": `https://music.163.com/#/song?id=${song.id}`,
+                  "level": "exhigh",
+                  "type": "song",
+                  "token": md5Str
+                }, {
+                  headers: {
+                    Timestamp: Date.now(),
+                    token: md5Str
+                  }
+                }).then((res: AxiosResponse) => {
+                  console.log('$res', res.data);
+                  if(max >= 0) {
+                    if (res.data.song_info.level === '极高音质 (HQ)') {
+                      if (songSource.value) {
+                        ZKStore.play.song.url = res.data.url_info.url;
+                        songSource.value.src = ZKStore.play.song.url;
+                      }
+                    }else {
+                      tryOnce();
+                    }
+                  }else {
+                    if (songSource.value) {
+                      ZKStore.play.song.url = res.data.url_info.url;
+                      songSource.value.src = ZKStore.play.song.url;
+                    }
+                  }
+                })
+              }
+              tryOnce();
+            }else {
+              normalClient.get(ZKStore.config.neteaseApi.url + 'song/url', {params: {
+                  id: song.id,
+                  cookie: ZKStore.neteaseUser.cookie
+                }}).then (res => {
+                if (res.data.data[0]) {
+                  if (songSource.value) {
+                    ZKStore.play.song.url = res.data.data[0].url;
+                    songSource.value.src = ZKStore.play.song.url;
+                  }
+                }
+              }).catch((err: AxiosError) => {
+                if (err.response?.status === 404) {
+                  if (songSource.value) {
+                    ZKStore.play.song.url = `http://music.163.com/song/media/outer/url?id=${song.id}.mp3`;
+                    songSource.value.src = ZKStore.play.song.url;
+                  }
+                  console.log('使用outerAPI请求歌曲');
+                }
+              })
+            }
+            if (ZKStore.play.song.lrc.status === 'disabled' || ZKStore.play.song.translationLrc.status === 'disabled') {
+                normalClient.get(ZKStore.config.neteaseApi.url + 'lyric', {params: {id: song.id}}).then((res: AxiosResponse) => {
+                    if (res.data.lrc.lyric && ZKStore.play.song.lrc.status === 'disabled') {
+                        console.log(res.data.lrc);
+                        ZKStore.play.song.lrc = {
+                            status: 'enable',
+                            type: 'content',
+                            content: res.data.lrc.lyric,
+                            lrc: []
+                        }
+                    }
+                    if (res.data.tlyric.lyric && ZKStore.play.song.translationLrc.status === 'disabled') {
+                        console.log(res.data.tlyric);
+                        ZKStore.play.song.translationLrc = {
+                            status: 'enable',
+                            type: 'content',
+                            content: res.data.tlyric.lyric,
+                            lrc: []
+                        }
+                    }
+                })
+            }
+          })
         }
     }else if (song.type === 'qq') {
         console.log(song)

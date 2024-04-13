@@ -4,6 +4,7 @@ import {normalClientInjectionKey} from "@/types";
 import {saveConfig, useZKStore} from "@/stores/useZKstore.ts";
 import {AxiosResponse} from "axios";
 import {showMsg} from "@/utils/u.ts";
+import emitter from "@/emitter";
 
 let ZKStore = useZKStore();
 let qrimgEl = ref<HTMLImageElement>();
@@ -12,7 +13,7 @@ let normalClient = inject(normalClientInjectionKey)!;
 let mode = ref('');
 let key = ref('');
 let timer = <NodeJS.Timeout>(-1 as any);
-function checkStatus() {
+function checkStatus(refresh: boolean = false) {
   if (Object.values(ZKStore.neteaseUser).every(s => s)) {
     mode.value = 'logined';
     return;
@@ -26,6 +27,10 @@ function checkStatus() {
       ZKStore.neteaseUser.nickname = res.data.data.profile.nickname;
       ZKStore.neteaseUser.avatarUrl = res.data.data.profile.avatarUrl;
       ZKStore.neteaseUser.uid = res.data.data.profile.userId;
+      ZKStore.neteaseUser.vipType = res.data.data.profile.vipType;
+      if (refresh) {
+        emitter.emit('refreshPlaylists');
+      }
       saveConfig();
       mode.value = 'logined';
     }else {
@@ -34,6 +39,7 @@ function checkStatus() {
       ZKStore.neteaseUser.avatarUrl = '';
       ZKStore.neteaseUser.cookie = '';
       ZKStore.neteaseUser.uid = '';
+      ZKStore.neteaseUser.vipType = '0';
       saveConfig();
     }
   }).finally(() => {
@@ -73,7 +79,7 @@ function checkStatus() {
               showMsg(ZKStore.message, 4000, `${status.data.message}`);
               ZKStore.neteaseUser.cookie = status.data.cookie;
               // console.log('$cookie', status.data.cookie);
-              checkStatus();
+              checkStatus(true);
             }
             // console.log('$status', status.data);
           }, 3000)
@@ -94,7 +100,9 @@ function logout() {
     ZKStore.neteaseUser.avatarUrl = '';
     ZKStore.neteaseUser.cookie = '';
     ZKStore.neteaseUser.uid = '';
+    ZKStore.neteaseUser.vipType = '0';
     saveConfig();
+    checkStatus(true);
   })
 }
 onMounted(() => checkStatus());

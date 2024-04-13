@@ -16,7 +16,7 @@
             <div @click="turnToPlaylistDetail" :class="{tab: true, active: ZKStore.nowTab === 'PlaylistDetail'}">歌单</div>
             <div @click="ZKStore.nowTab = 'Search'" :class="{tab: true, active: ZKStore.nowTab === 'Search'}">搜索</div>
             <div @click="ZKStore.nowTab = 'UserCenter'" :class="{tab: true, active: ZKStore.nowTab === 'UserCenter'}">
-              <div class="text">用户</div>
+              <div class="text">{{ ZKStore.neteaseUser.nickname || '用户' }}</div>
               <img v-if="ZKStore.neteaseUser.avatarUrl" style="border-radius: 50%;margin-left: 4px;margin-top:6px; height: 28px;" :src="ZKStore.neteaseUser.avatarUrl" alt="">
             </div>
         </div>
@@ -143,35 +143,71 @@ onMounted(() => {
 provide(clientInjectionKey, client);
 provide(normalClientInjectionKey, normalClient);
 (async ()=> {
+  async function refreshPlaylists() {
+    ZKStore.playlists = [];
+    ZKStore.playlistsParts = [];
+    Object.assign(ZKStore.playlist, {
+      listIndex: -1,
+      songs: <song[]>[],
+    })
+    await readDir(`res/lists`, {dir: BaseDirectory.Resource}).then(res => {
+      {
+        loadLocalPlaylists(res)
+      }
+    });
+    if (ZKStore.neteaseUser.cookie) {
+      let res = await normalClient.post(`http://localhost:3000/user/playlist?uid=${ZKStore.neteaseUser.uid}`, {
+        cookie: ZKStore.neteaseUser.cookie,
+      })
+      let c = res.data.playlist.length;
+      ZKStore.playlists.push(...res.data.playlist.map((playlist: any) => ({
+        title: playlist.name,
+        pic: playlist.coverImgUrl,
+        intro: 'FROM NETEASE',
+        originFilename: 't.t',
+        playlist: [{
+          type: 'trace_netease_playlist',
+          id: playlist.id
+        }]
+      })))
+      ZKStore.playlistsParts.push({
+        title: '网易云',
+        begin: ZKStore.playlistsParts[0].count,
+        count: c
+      })
+    }
+  }
   ZKStore.resourceDir = (await path.resourceDir()).substring(4).replaceAll('\\', '/');
     if (!await exists('res/lists', {dir: BaseDirectory.Resource})) {
         createDir("res/lists", {dir: BaseDirectory.Resource})
     }
     let neteaseapi = new Command('node', ['./res/neteaseapi/app.js'], {cwd: await resourceDir()});
     neteaseapi.spawn();
-  async function loadPlaylists(files: FileEntry[]) {  
-    ZKStore.playlists = await Promise.all(
+  async function loadLocalPlaylists(files: FileEntry[]) {  
+    let c = 0;
+    ZKStore.playlists.push(...(await Promise.all(
       files.filter(f => {
-        return f.path.substring(f.path.lastIndexOf('.')) === '.json'
-      }).map(async (file: FileEntry) => ({...JSON.parse(await readTextFile(file.path)), originFilename: file.path.substring(file.path.lastIndexOf('\\') + 1)})))
+        if (f.path.substring(f.path.lastIndexOf('.')) === '.json') {
+          c++;
+          return true;
+        }else {
+          return false;
+        }
+      }).map(
+          async (file: FileEntry) => ({
+            ...JSON.parse(await readTextFile(file.path)),
+            originFilename: file.path.substring(file.path.lastIndexOf('\\') + 1)
+          })))))
+    ZKStore.playlistsParts.push({
+      title: '本地',
+      begin: 0,
+      count: c
+    })
   }
-  readDir(`res/lists`, {dir: BaseDirectory.Resource}).then(res => {
-    {
-      loadPlaylists(res);
-    }
-  });
+  refreshPlaylists();
   emitter.on('refreshPlaylists', () => {
-    readDir(`res/lists`, {dir: BaseDirectory.Resource}).then(res => {
-      {
-        loadPlaylists(res);
-        Object.assign(ZKStore.playlist, {
-          listIndex: -1,
-          songs: <song[]>[],
-        })
-      }
-    });
+    refreshPlaylists();
   });
-  appWindow.setResizable(false);
 })();
 onUnmounted(() => {
   emitter.off('refreshPlaylists')

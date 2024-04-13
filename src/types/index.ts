@@ -25,6 +25,11 @@ export type list_trace_qq_playlist = {
     type: 'trace_qq_playlist',
     id: string
 }
+export type playlistPart = {
+    title: string,
+    begin: number,
+    count: number
+}
 export type playlistComponent = list_data | list_trace_bilibili_fav | list_trace_siren | list_trace_netease_playlist | list_trace_qq_playlist;
 export type list = {
     playlist: playlistComponent[]

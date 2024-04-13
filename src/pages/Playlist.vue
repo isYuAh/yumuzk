@@ -1,24 +1,27 @@
 <template>
 <div class="partContainer forbidSelect">
+  <simplebar class="simplebar">
     <Transition name="uianim">
-        <div class="playlistControllers">
-            <button @click="importPlaylist" class="controllerButton import">导入</button>
-            <button @click="emitter.emit('refreshPlaylists')" class="controllerButton import">刷新</button>
-            <button @click="testFunc" class="controllerButton test">测试</button>
-        </div>
+      <div class="playlistControllers">
+        <button @click="importPlaylist" class="controllerButton import">导入</button>
+        <button @click="emitter.emit('refreshPlaylists')" class="controllerButton import">刷新</button>
+        <button @click="testFunc" class="controllerButton test">测试</button>
+      </div>
     </Transition>
-  <div class="divideTitle">本地</div>
-    <div class="lists">
-        <div @click="checkDetail(index)" v-for="list, index in useZKStore().playlists" class="item">
-            <TargetBorder>
-                <div class="img">
-                    <img referrerpolicy="no-referrer" :src="list.pic" alt="">
-                </div>
-            </TargetBorder>
-            <div class="title">{{ list.title }}</div>
+    <div v-for="p in ZKStore.playlistsParts" class="playlistPart">
+      <div class="divideTitle">{{p.title}}</div>
+      <div class="lists">
+        <div @click="checkDetail(index + p.begin)" v-for="(list, index) in ZKStore.playlists.slice(p.begin, p.begin + p.count)" class="item">
+          <TargetBorder>
+            <div class="img">
+              <img referrerpolicy="no-referrer" :src="list.pic" alt="">
+            </div>
+          </TargetBorder>
+          <div class="title">{{ list.title }}</div>
         </div>
+      </div>
     </div>
-    <div class="divideTitle">网易云</div>
+  </simplebar>
 </div>
 </template>
 
@@ -34,6 +37,8 @@ import TargetBorder from '../components/TargetBorder.vue'
 //@ts-ignore
 import path from 'path-browserify';
 import emitter from '@/emitter';
+import simplebar from "simplebar-vue";
+import 'simplebar-vue/dist/simplebar.min.css'
 import { showMsg } from '@/utils/u';
 import { WebviewWindow } from '@tauri-apps/api/window';
 import { AxiosResponse } from 'axios';
@@ -196,6 +201,7 @@ function testFunc() {
 
 <style scoped>
 .partContainer {
+  height: 100%;
     display: flex;
     flex-direction: column;
 }
@@ -262,7 +268,10 @@ function testFunc() {
 .divideTitle {
   margin: 20px;
   font-size: 24px;
-  font-family: PingFang SC,serif;
+  font-family: PingFang SC;
 
+}
+.simplebar {
+  height: 100%;
 }
 </style>

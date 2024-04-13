@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import type {list, messageController, song, songInPlay, song_lrc_item} from '../types'
+import type {list, messageController, song, songInPlay, song_lrc_item, playlistPart} from '../types'
 import { BaseDirectory, writeTextFile } from '@tauri-apps/api/fs';
 import CollectDialog from '@/components/CollectDialog.vue';
 import { shallowRef } from 'vue';
@@ -11,6 +11,7 @@ export const useZKStore = defineStore('ZK', {
   state: () => ({
     config: {} as any,
     playlists: <list[]>[],
+    playlistsParts: <playlistPart[]>[],
     nowTab: 'Playlist',
     loading: {
       text: '',
@@ -75,6 +76,7 @@ export const useZKStore = defineStore('ZK', {
     neteaseUser: {
       nickname: '',
       avatarUrl: '',
+      vipType: '0',
       uid: '',
       cookie: ''
     }
