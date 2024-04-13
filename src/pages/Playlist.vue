@@ -2,13 +2,15 @@
 <div class="partContainer forbidSelect">
   <simplebar class="simplebar">
     <Transition name="uianim">
-      <div class="playlistControllers">
+      <div v-if="ZKStore.nowTab === 'Playlist'" class="playlistControllers">
         <button @click="importPlaylist" class="controllerButton import">导入</button>
         <button @click="emitter.emit('refreshPlaylists')" class="controllerButton import">刷新</button>
         <button @click="testFunc" class="controllerButton test">测试</button>
       </div>
     </Transition>
-    <div v-for="p in ZKStore.playlistsParts" class="playlistPart">
+    <div
+        v-show="PartVShow[index]"
+        v-for="(p, index) in ZKStore.playlistsParts" class="playlistPart">
       <div class="divideTitle">{{p.title}}</div>
       <div class="lists">
         <div @click="checkDetail(index + p.begin)" v-for="(list, index) in ZKStore.playlists.slice(p.begin, p.begin + p.count)" class="item">
@@ -28,7 +30,7 @@
 <script setup lang='ts'>
 import { useZKStore } from '../stores/useZKstore';
 import { clientInjectionKey, list_trace_bilibili_fav, playlistComponent } from '../types';
-import { inject } from 'vue';
+import {computed, inject} from 'vue';
 import { normalClientInjectionKey } from '../types';
 import { type song } from '../types';
 import { ask, open } from '@tauri-apps/api/dialog';
@@ -45,6 +47,29 @@ import { AxiosResponse } from 'axios';
 let client = inject(clientInjectionKey)!;
 let normalClient = inject(normalClientInjectionKey)!;
 let ZKStore = useZKStore();
+let PartVShow = computed(() => {
+  let r = <boolean[]>[];
+  if (ZKStore.nowTab === 'Playlist') {
+    ZKStore.playlistsParts.forEach((p, index) => {
+      if ('other' in p && 'showInMainPage' in p.other) {
+        console.log(ZKStore.nowTab, p.other, p.other.showInMainPage)
+        r[index] = p.other.showInMainPage
+      }else {
+        console.log(ZKStore.nowTab);
+        r[index] = true;
+      }
+    })
+  }else if (ZKStore.nowTab === 'PlaylistRecommend_netease') {
+    ZKStore.playlistsParts.forEach((p, index) => {
+      if ('other' in p && 'type' in p.other) {
+        r[index] = p.other.type === 'recommend_netease'
+      }else {
+        r[index] = false;
+      }
+    })
+  }
+  return r;
+})
 function parseComponent(comIndex: number, components: playlistComponent[]) {
     // console.log(comIndex, components[comIndex], '$');
     let component = components[comIndex];

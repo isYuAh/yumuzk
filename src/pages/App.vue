@@ -12,12 +12,13 @@
       <div data-tauri-drag-region class="title">Yumuzk</div>
       <Transition appear name="playcontroller">
         <div v-show="!ZKStore.showFullPlay" class="tabs">
-            <div @click="ZKStore.nowTab = 'Playlist'" :class="{tab: true, active: ZKStore.nowTab === 'Playlist'}">首页</div>
-            <div @click="turnToPlaylistDetail" :class="{tab: true, active: ZKStore.nowTab === 'PlaylistDetail'}">歌单</div>
-            <div @click="ZKStore.nowTab = 'Search'" :class="{tab: true, active: ZKStore.nowTab === 'Search'}">搜索</div>
-            <div @click="ZKStore.nowTab = 'UserCenter'" :class="{tab: true, active: ZKStore.nowTab === 'UserCenter'}">
-              <div class="text">{{ ZKStore.neteaseUser.nickname || '用户' }}</div>
-              <img v-if="ZKStore.neteaseUser.avatarUrl" style="border-radius: 50%;margin-left: 4px;margin-top:6px; height: 28px;" :src="ZKStore.neteaseUser.avatarUrl" alt="">
+          <div @click="ZKStore.nowTab = 'Playlist'" :class="{tab: true, active: ZKStore.nowTab === 'Playlist'}">首页</div>
+          <div @click="ZKStore.nowTab = 'PlaylistRecommend_netease'" :class="{tab: true, active: ZKStore.nowTab === 'PlaylistRecommend_netease'}">推荐</div>
+          <div @click="turnToPlaylistDetail" :class="{tab: true, active: ZKStore.nowTab === 'PlaylistDetail'}">歌单</div>
+          <div @click="ZKStore.nowTab = 'Search'" :class="{tab: true, active: ZKStore.nowTab === 'Search'}">搜索</div>
+          <div @click="ZKStore.nowTab = 'UserCenter'" :class="{tab: true, active: ZKStore.nowTab === 'UserCenter'}">
+            <div class="text">{{ ZKStore.neteaseUser.nickname || '用户' }}</div>
+            <img v-if="ZKStore.neteaseUser.avatarUrl" style="border-radius: 50%;margin-left: 4px;margin-top:6px; height: 28px;" :src="ZKStore.neteaseUser.avatarUrl" alt="">
             </div>
         </div>
       </Transition>
@@ -29,6 +30,7 @@
     <div class="content">
         <Transition appear name="uianim">
             <Playlist key="Playlist" v-if="ZKStore.nowTab === 'Playlist'"></Playlist>
+            <Playlist key="PlaylistRecommend_netease" v-else-if="ZKStore.nowTab === 'PlaylistRecommend_netease'"></Playlist>
             <PlaylistDetail key="PlaylistDetail" v-else-if="ZKStore.nowTab === 'PlaylistDetail'"></PlaylistDetail>
             <Loading key="Loading" v-else-if="ZKStore.nowTab === 'Loading'"></Loading>
             <Search key="Search" v-else-if="ZKStore.nowTab === 'Search'"></Search>
@@ -41,13 +43,12 @@
 </template>
 
 <script setup lang="ts">
-import { Command } from '@tauri-apps/api/shell';
 import '@/assets/anim.css'
 import { readDir, createDir, BaseDirectory, exists, readTextFile, FileEntry } from '@tauri-apps/api/fs';
 import { exit } from '@tauri-apps/api/process';
 import { appWindow } from '@tauri-apps/api/window';
 import { useZKStore, saveConfig } from '@/stores/useZKstore'
-import axios, {AxiosResponse} from 'axios';
+import axios from 'axios';
 import axiosTauriApiAdapter from 'axios-tauri-api-adapter';
 import { clientInjectionKey, normalClientInjectionKey, song } from '@/types';
 import { onMounted, onUnmounted, provide, shallowRef, watch } from 'vue';
@@ -64,7 +65,6 @@ import Dialog from '@/components/Dialog.vue'
 import { minmax } from '@/utils/u';
 import emitter from '@/emitter';
 import { path } from '@tauri-apps/api';
-import { resourceDir } from '@tauri-apps/api/path';
 
 const axiosController = new AbortController();
 
@@ -156,10 +156,11 @@ provide(normalClientInjectionKey, normalClient);
       }
     });
     if (ZKStore.neteaseUser.cookie) {
-      let res = await normalClient.post(`http://localhost:3000/user/playlist?uid=${ZKStore.neteaseUser.uid}`, {
+      let res = await normalClient.post(`${ZKStore.config.neteaseApi.url}user/playlist?uid=${ZKStore.neteaseUser.uid}`, {
         cookie: ZKStore.neteaseUser.cookie,
       })
       let c = res.data.playlist.length;
+      console.log(c, ZKStore.playlistsParts[ZKStore.playlistsParts.length - 1].count);
       ZKStore.playlists.push(...res.data.playlist.map((playlist: any) => ({
         title: playlist.name,
         pic: playlist.coverImgUrl,
@@ -172,8 +173,31 @@ provide(normalClientInjectionKey, normalClient);
       })))
       ZKStore.playlistsParts.push({
         title: '网易云',
-        begin: ZKStore.playlistsParts[0].count,
-        count: c
+        begin: ZKStore.playlistsParts[ZKStore.playlistsParts.length - 1].begin + ZKStore.playlistsParts[ZKStore.playlistsParts.length - 1].count,
+        count: c,
+      })
+    }
+    {
+      let res = await normalClient.get(`${ZKStore.config.neteaseApi.url}top/playlist/highquality`);
+      let c = res.data.playlists.length;
+      ZKStore.playlists.push(...res.data.playlists.map((playlist: any) => ({
+        title: playlist.name,
+        pic: playlist.coverImgUrl,
+        intro: 'NETEASE RECOMMEND',
+        originFilename: 't.t',
+        playlist: [{
+          type: 'trace_netease_playlist',
+          id: playlist.id
+        }]
+      })))
+      ZKStore.playlistsParts.push({
+        title: '网易云推荐',
+        begin: ZKStore.playlistsParts[ZKStore.playlistsParts.length - 1].begin + ZKStore.playlistsParts[ZKStore.playlistsParts.length - 1].count,
+        count: c,
+        other: {
+          type: 'recommend_netease',
+          showInMainPage: false
+        }
       })
     }
   }
@@ -181,8 +205,9 @@ provide(normalClientInjectionKey, normalClient);
     if (!await exists('res/lists', {dir: BaseDirectory.Resource})) {
         createDir("res/lists", {dir: BaseDirectory.Resource})
     }
-    let neteaseapi = new Command('node', ['./res/neteaseapi/app.js'], {cwd: await resourceDir()});
-    neteaseapi.spawn();
+    // 自动运行api服务
+    // let neteaseapi = new Command('node', ['./res/neteaseapi/app.js'], {cwd: await resourceDir()});
+    // neteaseapi.spawn();
   async function loadLocalPlaylists(files: FileEntry[]) {  
     let c = 0;
     ZKStore.playlists.push(...(await Promise.all(

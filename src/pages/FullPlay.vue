@@ -379,7 +379,8 @@ watch([() => ZKStore.play.song.lrc, () => {ZKStore.play.song.translationLrc}, ()
 }
 .partContainer .left .controlButtons {
     margin-top: 20px;
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
 }
 .partContainer .left .controlButtons .playbutton {
     width: 24px;

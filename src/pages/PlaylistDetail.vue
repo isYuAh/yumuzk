@@ -41,7 +41,7 @@
                             class="song" 
                             @contextmenu.prevent="showMenu($event, song, index)"
                             :data-song="song"
-                            v-for="song, index in ZKStore.playlist.songs">
+                            v-for="(song, index) in ZKStore.playlist.songs">
                             <div class="songInfo title">{{ song.title }}<sub>{{ song.type }}</sub></div>
                             <div class="songInfo author">{{ song.singer }}</div>
                         </div>
@@ -149,9 +149,6 @@ function playSong_withCheck(song: song) {
         ZKStore.play.playlist = structuredClone(toRaw(ZKStore.playlist.songs))
         emitter.emit('playSong',{song})
     }
-}
-function dealPlaylistSong (e: any, song: song) {
-    console.log(e, song);
 }
 </script>
 

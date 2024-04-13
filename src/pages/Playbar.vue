@@ -634,10 +634,16 @@ onUnmounted(() => {
     height: 16px;
 }
 .play .songInformation .singer {
-    margin-top: 5px;
-    padding-left: 7px;
-    color: #61666D;
-    font-size: 14px;
+  margin-top: 5px;
+  padding-left: 7px;
+  color: #61666D;
+  font-size: 14px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+  word-break: break-all;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
 }
 .play .controlButtons {
     display: flex;

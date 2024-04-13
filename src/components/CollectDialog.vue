@@ -3,7 +3,7 @@
     <div class="header">收藏</div>
     <div class="content">
         <select ref="selectComponent" style="width: 400px" name="" id="">
-            <option v-for="list in ZKStore.playlists" :value="list.title">{{ list.title }}</option>
+            <option v-show="index < ZKStore.playlistsParts[0].count" v-for="(list, index) in ZKStore.playlists" :value="list.title">{{ list.title }}</option>
         </select>
     </div>
     <div class="footer">
