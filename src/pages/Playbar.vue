@@ -341,7 +341,10 @@ function playSong({song, justtry = false}: playSongParams){
                 }
             })
         }else {
-            normalClient.get(ZKStore.config.neteaseApi.url + 'song/url', {params: {id: song.id}}).then (res => {
+            normalClient.get(ZKStore.config.neteaseApi.url + 'song/url', {params: {
+              id: song.id,
+              cookie: ZKStore.neteaseUser.cookie
+            }}).then (res => {
                 if (res.data.data[0]) {
                     if (songSource.value) {
                         ZKStore.play.song.url = res.data.data[0].url;
@@ -408,6 +411,30 @@ function playSong({song, justtry = false}: playSongParams){
                 }
             })
         }
+    }else if (song.type === 'qq') {
+        console.log(song)
+        normalClient.post(ZKStore.config.qqApi.url + "api/y/get_song", {
+            type: "qq",
+            mid: song.mid,
+        }).then((res: AxiosResponse) => {
+            let result = res.data.data[0];
+            if (songfaceImg.value) {
+                if (ZKStore.play.song.pic) {
+                    ZKStore.play.show_songface = true;
+                    songfaceImg.value.src = ZKStore.play.song.pic;
+                }else if(result.pic) {
+                    ZKStore.play.show_songface = true;
+                    ZKStore.play.song.pic = res.data.data.pic;
+                    songfaceImg.value.src = res.data.data.pic;
+                }else {
+                    ZKStore.play.show_songface = false;
+                }
+            }
+            if (songSource.value) {
+                ZKStore.play.song.url = result.url;
+                songSource.value.src = ZKStore.play.song.url;
+            }
+        })
     }
     if (songSource.value) {
         songSource.value.addEventListener('loadedmetadata', () => {

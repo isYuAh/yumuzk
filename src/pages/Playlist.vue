@@ -7,6 +7,7 @@
             <button @click="testFunc" class="controllerButton test">测试</button>
         </div>
     </Transition>
+  <div class="divideTitle">本地</div>
     <div class="lists">
         <div @click="checkDetail(index)" v-for="list, index in useZKStore().playlists" class="item">
             <TargetBorder>
@@ -17,6 +18,7 @@
             <div class="title">{{ list.title }}</div>
         </div>
     </div>
+    <div class="divideTitle">网易云</div>
 </div>
 </template>
 
@@ -34,6 +36,7 @@ import path from 'path-browserify';
 import emitter from '@/emitter';
 import { showMsg } from '@/utils/u';
 import { WebviewWindow } from '@tauri-apps/api/window';
+import { AxiosResponse } from 'axios';
 let client = inject(clientInjectionKey)!;
 let normalClient = inject(normalClientInjectionKey)!;
 let ZKStore = useZKStore();
@@ -98,7 +101,6 @@ function parseComponent(comIndex: number, components: playlistComponent[]) {
                 id: component.id,
             }
         }).then(res => {
-            console.log(res);
             if (res.data.playlist.tracks) {
                 ZKStore.playlist.songs.push(...res.data.playlist.tracks.map((track: any) => {
                     return <song>{
@@ -110,6 +112,21 @@ function parseComponent(comIndex: number, components: playlistComponent[]) {
                     }
                 }))
             }
+            comIndex++;
+            parseComponent(comIndex, components);
+        })
+    }else if (component.type === 'trace_qq_playlist') {
+        if (!ZKStore.config.qqApi.enable) {
+            comIndex++;
+            parseComponent(comIndex, components);
+            return;
+        }
+        normalClient.post(ZKStore.config.qqApi.url + 'api/y/get_playlistDetail', {
+            type: "qq",
+            id: component.id
+        }).then((res: AxiosResponse) => {
+            let result = res.data.data[0];
+            ZKStore.playlist.songs.push(...result.songlist.map((r: any) => ({...r, type: 'qq'})));
             comIndex++;
             parseComponent(comIndex, components);
         })
@@ -188,7 +205,7 @@ function testFunc() {
 .partContainer .lists {
     flex: 1;
     display: grid;
-    padding: 20px;
+    padding: 0 20px;
     gap: 20px;
     grid-template-columns: repeat(auto-fill, minmax(182px, 1fr));
     justify-content: center;
@@ -241,5 +258,11 @@ function testFunc() {
 }
 .controllerButton:hover {
     box-shadow: 0 0 7px rgba(0, 0, 0, .6);
+}
+.divideTitle {
+  margin: 20px;
+  font-size: 24px;
+  font-family: PingFang SC,serif;
+
 }
 </style>

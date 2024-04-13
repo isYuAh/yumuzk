@@ -21,7 +21,11 @@ export type list_trace_netease_playlist = {
     type: 'trace_netease_playlist',
     id: string
 }
-export type playlistComponent = list_data | list_trace_bilibili_fav | list_trace_siren | list_trace_netease_playlist;
+export type list_trace_qq_playlist = {
+    type: 'trace_qq_playlist',
+    id: string
+}
+export type playlistComponent = list_data | list_trace_bilibili_fav | list_trace_siren | list_trace_netease_playlist | list_trace_qq_playlist;
 export type list = {
     playlist: playlistComponent[]
 } & list_basic;
@@ -85,6 +89,10 @@ export type song_siren = {
     type: 'siren',
     cid: string
 } & song_basic;
+export type song_qq = {
+    type: 'qq',
+    mid: string
+} & song_basic;
 
 export type song = song_bilibili |
                     song_local |
@@ -92,7 +100,8 @@ export type song = song_bilibili |
                     song_netease |
                     song_netease_outer |
                     song_netease_other |
-                    song_siren
+                    song_siren |
+                    song_qq
 export type songInPlay = {
     pic: string,
     title: string,

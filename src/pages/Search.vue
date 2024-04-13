@@ -39,7 +39,7 @@
                 </simplebar>
             </div>
         </div>
-        <Pagination @change-page="changePage" :total="total" class="pagination"></Pagination>
+        <Pagination  @change-page="changePage" :total="total" class="pagination"></Pagination>
     </LoadingMask>
 </div>
 </template>

@@ -1,5 +1,8 @@
 <template>
 <div class="transitionContainer">
+  <MouseMenu :arg="mm.arg" :show="mm.show" :menulist="mm.menulist"
+             :position="mm.position"
+  />
     <div @click="ZKStore.nowTab = 'Playlist';" class="returnBtn">
         <svg t="1711457272465" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4244" width="48" height="48"><path d="M963.2 0L1024 67.2 512 614.4 0 67.2 60.8 0 512 480 963.2 0z" fill="currentColor" p-id="4245"></path></svg>
     </div>
@@ -36,8 +39,9 @@
                             v-show="song.title.includes(filter) || song.singer.includes(filter)" 
                             @dblclick="playSong_withCheck(song)" 
                             class="song" 
+                            @contextmenu.prevent="showMenu($event, song, index)"
                             :data-song="song"
-                            v-for="song in ZKStore.playlist.songs">
+                            v-for="song, index in ZKStore.playlist.songs">
                             <div class="songInfo title">{{ song.title }}<sub>{{ song.type }}</sub></div>
                             <div class="songInfo author">{{ song.singer }}</div>
                             <div @click="dealPlaylistSong($event, song)" class="songInfo deal"> <!-- 操作 -->
@@ -53,13 +57,16 @@
 </template>
 
 <script setup lang='ts'>
-import { type song } from '../types'
+import { list_data, type song } from '../types'
+import MouseMenu from '@/components/MouseMenu.vue';
 import simplebar from 'simplebar-vue';
 import 'simplebar-vue/dist/simplebar.min.css'
-import { ref, toRaw } from 'vue';
+import { ref, toRaw, watch } from 'vue';
 import { useZKStore } from '../stores/useZKstore';
 import emitter from '@/emitter';
 import '@/assets/songlist.css'
+import { BaseDirectory, writeTextFile } from '@tauri-apps/api/fs';
+import { showMsg } from '@/utils/u';
 let ZKStore = useZKStore();
 let filter = ref('');
 function playAll() {
@@ -68,6 +75,75 @@ function playAll() {
     if (ZKStore.play.playlist[0]) {
         emitter.emit('playSong',{song: ZKStore.play.playlist[0]})
     }
+}
+let mm = ref({
+    position: {
+        left: 20,
+        top: 40
+    },
+    show: false,
+    arg: {
+        song: <song>(null as any),
+        si: -1
+    },
+    menulist: [
+        {
+            title: '删除',
+            ev: menu_deleteSong,
+            show: true,
+        },
+        {
+            title: '关闭',
+            ev: menu_closeSelection,
+        }
+    ]
+})
+function showMenu(e: any, song: song, si: number) {
+    mm.value.position = {
+        left: e.x,
+        top: e.y
+    }
+    mm.value.arg.song = song;
+    mm.value.arg.si = si;
+    mm.value.show = true;
+}
+function menu_deleteSong(arg: any) {
+    if (arg.song && arg.si >= 0) {
+        let ser = arg.si + 1;
+        let componentIndex = -1;
+        let np = ZKStore.playlists[ZKStore.playlist.listIndex];
+        for (let cI = 0; cI < np.playlist.length; cI++) {
+            let  c = np.playlist[cI];
+            if (c.type === 'data') {
+                if (c.songs.length >= ser) {
+                    componentIndex = cI
+                    break;
+                }else {
+                    ser -= c.songs.length;
+                }
+            }
+        }
+        if (componentIndex >= 0) {
+            let originFn = np.originFilename;
+            (np.playlist[componentIndex] as list_data).songs.splice(ser - 1, 1);
+            ZKStore.playlist.songs.splice(arg.si, 1);
+            writeTextFile(`res/lists/${originFn}`, JSON.stringify(toRaw(np)), {dir: BaseDirectory.Resource}).then(() => {
+                showMsg(ZKStore.message, 4000, '删除成功');
+            }).catch(() => {
+                showMsg(ZKStore.message, 4000, `写入文件${originFn}失败`);
+            })
+            
+        }
+        console.log(componentIndex);
+        console.log(ser - 1);
+    }
+    mm.value.show = false;
+}
+watch(() => ZKStore.playlist.listIndex, () => {
+    mm.value.menulist[0].show = ZKStore.playlists[ZKStore.playlist.listIndex].playlist.every((s) => s.type === 'data')
+}, {immediate: true})
+function menu_closeSelection() {
+    mm.value.show = false
 }
 function playSong_withCheck(song: song) {
     if (ZKStore.play.playlist.length) {

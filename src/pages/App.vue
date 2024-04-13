@@ -15,6 +15,10 @@
             <div @click="ZKStore.nowTab = 'Playlist'" :class="{tab: true, active: ZKStore.nowTab === 'Playlist'}">首页</div>
             <div @click="turnToPlaylistDetail" :class="{tab: true, active: ZKStore.nowTab === 'PlaylistDetail'}">歌单</div>
             <div @click="ZKStore.nowTab = 'Search'" :class="{tab: true, active: ZKStore.nowTab === 'Search'}">搜索</div>
+            <div @click="ZKStore.nowTab = 'UserCenter'" :class="{tab: true, active: ZKStore.nowTab === 'UserCenter'}">
+              <div class="text">用户</div>
+              <img v-if="ZKStore.neteaseUser.avatarUrl" style="border-radius: 50%;margin-left: 4px;margin-top:6px; height: 28px;" :src="ZKStore.neteaseUser.avatarUrl" alt="">
+            </div>
         </div>
       </Transition>
       <div class="controlbtn">
@@ -26,8 +30,9 @@
         <Transition appear name="uianim">
             <Playlist key="Playlist" v-if="ZKStore.nowTab === 'Playlist'"></Playlist>
             <PlaylistDetail key="PlaylistDetail" v-else-if="ZKStore.nowTab === 'PlaylistDetail'"></PlaylistDetail>
-            <Loading key="Loading" v-else-if="ZKStore.nowTab === 'Loading'"</Loading>
-            <Search key="Search" v-else-if="ZKStore.nowTab === 'Search'"</Search>
+            <Loading key="Loading" v-else-if="ZKStore.nowTab === 'Loading'"></Loading>
+            <Search key="Search" v-else-if="ZKStore.nowTab === 'Search'"></Search>
+            <UserCenter key="UserCenter" v-else-if="ZKStore.nowTab === 'UserCenter'"></UserCenter>
         </Transition>
     </div>
     <Playbar></Playbar>
@@ -42,7 +47,7 @@ import { readDir, createDir, BaseDirectory, exists, readTextFile, FileEntry } fr
 import { exit } from '@tauri-apps/api/process';
 import { appWindow } from '@tauri-apps/api/window';
 import { useZKStore, saveConfig } from '@/stores/useZKstore'
-import axios from 'axios';
+import axios, {AxiosResponse} from 'axios';
 import axiosTauriApiAdapter from 'axios-tauri-api-adapter';
 import { clientInjectionKey, normalClientInjectionKey, song } from '@/types';
 import { onMounted, onUnmounted, provide, shallowRef, watch } from 'vue';
@@ -53,6 +58,7 @@ import Loading from '@/pages/Loading.vue'
 import FullPlay from '@/pages/FullPlay.vue'
 import Playbar from '@/pages/Playbar.vue'
 import Search from '@/pages/Search.vue'
+import UserCenter from '@/pages/UserCenter.vue';
 import Message from '@/components/Message.vue';
 import Dialog from '@/components/Dialog.vue'
 import { minmax } from '@/utils/u';
@@ -120,9 +126,10 @@ client.get('https://api.bilibili.com/x/web-interface/nav').then(res => {
 
 onMounted(() => {
   readTextFile("res/config.json", {dir: BaseDirectory.Resource}).then(res => {
-    console.log(res);
     if (res) {
-      ZKStore.config = JSON.parse(res);
+      let jp = JSON.parse(res);
+      ZKStore.config = jp.config;
+      ZKStore.neteaseUser = jp.neteaseUser;
       if (ZKStore.config.volume != undefined) {
         emitter.emit('changeVolumeTo', minmax(ZKStore.config.volume, 0, 1));
       }
@@ -231,14 +238,18 @@ body {
     display: flex;
 }
 .header .tab {
-    font-family: SourceSansCNM;
-    /* font-weight: bold; */
-    font-size: 18px;
-    margin: 0 8px;
-    padding: 5px 0;
-    height: 48px;
-    line-height: 40px;
-    transition: all .2s;
+  font-family: SourceSansCNM;
+  /* font-weight: bold; */
+  display: flex;
+  font-size: 18px;
+  margin: 0 8px;
+  padding: 5px 0;
+  height: 48px;
+  line-height: 40px;
+  transition: all .2s;
+}
+.header .tab img {
+  display: inline-block;
 }
 .header .tab.active {
     border-bottom: 4px solid #18191C

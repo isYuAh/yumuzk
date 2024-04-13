@@ -4,7 +4,7 @@ import { BaseDirectory, writeTextFile } from '@tauri-apps/api/fs';
 import CollectDialog from '@/components/CollectDialog.vue';
 import { shallowRef } from 'vue';
 export function saveConfig() {
-  writeTextFile('res/config.json', JSON.stringify(useZKStore().config), {dir: BaseDirectory.Resource})
+  writeTextFile('res/config.json', JSON.stringify({config: useZKStore().config, neteaseUser: useZKStore().neteaseUser}), {dir: BaseDirectory.Resource})
 }
 
 export const useZKStore = defineStore('ZK', {
@@ -71,7 +71,13 @@ export const useZKStore = defineStore('ZK', {
       highlightLrcIndex: -1,
     },
     wbi: {},
-    histroy: []
+    histroy: [],
+    neteaseUser: {
+      nickname: '',
+      avatarUrl: '',
+      uid: '',
+      cookie: ''
+    }
   }),
   // 在这里可以定义 getters、mutations 和 actions
 });

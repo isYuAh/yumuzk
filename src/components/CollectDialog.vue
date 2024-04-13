@@ -33,7 +33,9 @@ function collect() {
                 songs: [ZKStore.dialogData.waitCollect],
             })
         }
-        // console.log(ZKStore.playlists[selectComponent.value.selectedIndex]);
+        if (selectComponent.value.selectedIndex === ZKStore.playlist.listIndex) {
+            ZKStore.playlist.songs.unshift(ZKStore.dialogData.waitCollect)
+        }
         writeTextFile(`res/lists/${originFn}`, JSON.stringify(toRaw(ZKStore.playlists[selectComponent.value.selectedIndex])), {dir: BaseDirectory.Resource}).then(() => {
             showMsg(ZKStore.message, 4000, '添加成功');
         }).catch(() => {

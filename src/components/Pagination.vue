@@ -24,9 +24,9 @@ import { computed, ref, watch } from 'vue';
 
 let props = withDefaults(
     defineProps<{
-        total: number,
-        countInGroup: number
-        countInPage: number
+        total?: number,
+        countInGroup?: number
+        countInPage?: number
     }>(), {
     total: 0,
     countInGroup: 5,
