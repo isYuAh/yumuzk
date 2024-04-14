@@ -9,13 +9,16 @@
     <div class="partContainer">
         <div class="listInfo">
             <div class="faceImg">
-                <img :src="ZKStore.playlists[ZKStore.playlist.listIndex].pic" alt="">
+                <img :src="ZKStore.playlist.raw.pic" alt="">
             </div>
             <div class="info forbidSelect">
-                <div class="title">{{ ZKStore.playlists[ZKStore.playlist.listIndex].title }}</div>
+                <div class="top">
+                  <div class="title">{{ ZKStore.playlist.raw.title }}</div>
+                  <div v-show="ZKStore.playlist.raw.originFilename === 'REMOTE'" @click="collectPlaylist" class="collectPlaylist">收藏</div>
+                </div>
                 <div class="bottom">
                     <div class="total">TOTAL {{ ZKStore.playlist.songs.length }}</div>
-                    <div class="total">{{ ZKStore.playlists[ZKStore.playlist.listIndex].intro || 'AN ALBUM CREATED'}}</div>
+                    <div class="total">{{ ZKStore.playlist.raw.intro || 'AN ALBUM CREATED'}}</div>
                     <button @click="playAll" class="PlayAll">
                         <div class="svgIcon">
                             <svg t="1711448701001" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3437"><path d="M73.142857 0 910.957714 512 73.142857 1024Z" fill="#18191C" p-id="3438"></path></svg>
@@ -54,7 +57,7 @@
 </template>
 
 <script setup lang='ts'>
-import { list_data, type song } from '../types'
+import { list_data, type song } from '@/types'
 import MouseMenu from '@/components/MouseMenu.vue';
 import simplebar from 'simplebar-vue';
 import 'simplebar-vue/dist/simplebar.min.css'
@@ -91,7 +94,7 @@ let mm = ref({
         },
         {
             title: '关闭',
-            ev: menu_closeSelection,
+            ev: () => mm.value.show = false,
         }
     ]
 })
@@ -131,17 +134,16 @@ function menu_deleteSong(arg: any) {
             })
             
         }
-        console.log(componentIndex);
-        console.log(ser - 1);
     }
     mm.value.show = false;
 }
 watch(() => ZKStore.playlist.listIndex, () => {
-    mm.value.menulist[0].show = ZKStore.playlists[ZKStore.playlist.listIndex].playlist.every((s) => s.type === 'data')
+  if (ZKStore.playlist.listIndex === -2) {
+    mm.value.menulist[0].show = false;
+  }else {
+    mm.value.menulist[0].show = ZKStore.playlist.raw.playlist.every((s) => s.type === 'data')
+  }
 }, {immediate: true})
-function menu_closeSelection() {
-    mm.value.show = false
-}
 function playSong_withCheck(song: song) {
     if (ZKStore.play.playlist.length) {
         emitter.emit('playSong',{song})
@@ -149,6 +151,23 @@ function playSong_withCheck(song: song) {
         ZKStore.play.playlist = structuredClone(toRaw(ZKStore.playlist.songs))
         emitter.emit('playSong',{song})
     }
+}
+function collectPlaylist() {
+  let id = ZKStore.playlist.raw.title;
+  // if (ZKStore.playlist.raw.playlist[0].type === 'trace_netease_playlist') {
+  //
+  // }
+  writeTextFile(`res/lists/${id}.json`, JSON.stringify({
+    title: ZKStore.playlist.raw.title,
+    pic: ZKStore.playlist.raw.pic,
+    intro: ZKStore.playlist.raw.intro,
+    playlist: ZKStore.playlist.raw.playlist,
+  }), {dir: BaseDirectory.Resource}).then(() => {
+    showMsg(ZKStore.message, 4000, '收藏成功');
+    emitter.emit('refreshPlaylists', {notReset: true});
+  }).catch(() => {
+    showMsg(ZKStore.message, 4000, `写入文件${id}.json失败`);
+  });
 }
 </script>
 
@@ -215,6 +234,15 @@ function playSong_withCheck(song: song) {
     font-size: 18px;
     font-weight: bold;
     font-family: NovecentoWide;
+}
+.listInfo .info .collectPlaylist {
+  cursor: pointer;
+  background-color: #18191C;
+  display: inline-block;
+  color: #fff;
+  padding: 0 15px;
+  height: 35px;
+  line-height: 35px;
 }
 .listInfo .info .bottom .PlayAll {
     position: relative;

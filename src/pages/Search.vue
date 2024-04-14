@@ -39,7 +39,7 @@
                 </simplebar>
             </div>
         </div>
-        <Pagination  @change-page="changePage" :total="total" class="pagination"></Pagination>
+        <Pagination @change-page="changePage" :total="total" class="pagination forbidSelect"></Pagination>
     </LoadingMask>
 </div>
 </template>
@@ -55,7 +55,7 @@ import LoadingMask from '@/components/LoadingMask.vue'
 import Pagination from '@/components/Pagination.vue'
 import emitter from "@/emitter";
 import { useZKStore } from "@/stores/useZKstore";
-import CollectDialog from "@/components/CollectDialog.vue";
+import CollectDialog from "@/components/Dialogs/CollectDialog.vue";
 let ZKStore = useZKStore();
 let searchInput = ref<HTMLInputElement>();
 let normalClient = inject(normalClientInjectionKey)!;
@@ -70,7 +70,7 @@ function search() {
     if (searchInput.value) {
         if (suggestSelected.value === -1) {
             let query = searchInput.value.value;
-            let url = `http://localhost:3000/search`;
+            let url = `${ZKStore.config.neteaseApi.url}search`;
             loading.value = true;
             normalClient.get(url, {
                 params: {
@@ -101,7 +101,7 @@ function search() {
 function changePage(nowPage: number) {
     if (searchInput.value) {
         let query = searchInput.value.value;
-        let url = `http://localhost:3000/search`;
+        let url = `${ZKStore.config.neteaseApi.url}search`;
         loading.value = true;
         normalClient.get(url, {
             params: {
@@ -138,7 +138,7 @@ function nextSuggest() {
 function refreshSuggests () {
     if (searchInput.value && searchInput.value.value) {
         let query = searchInput.value.value
-        let url = `http://localhost:3000/search/suggest`
+        let url = `${ZKStore.config.neteaseApi.url}search/suggest`
         normalClient.get(url, {
             params: {
                 keywords: query,

@@ -1,10 +1,14 @@
 <template>
 <div class="partContainer forbidSelect">
+  <MouseMenu :arg="mm.arg" :show="mm.show" :menulist="mm.menulist"
+             :position="mm.position"
+  />
   <simplebar class="simplebar">
     <Transition name="uianim">
       <div v-if="ZKStore.nowTab === 'Playlist'" class="playlistControllers">
         <button @click="importPlaylist" class="controllerButton import">导入</button>
-        <button @click="emitter.emit('refreshPlaylists')" class="controllerButton import">刷新</button>
+        <button @click="emitter.emit('refreshPlaylists', {notReset: false})" class="controllerButton import">刷新</button>
+        <button @click="showPreviewDialog" class="controllerButton import">预览</button>
         <button @click="testFunc" class="controllerButton test">测试</button>
       </div>
     </Transition>
@@ -13,7 +17,7 @@
         v-for="(p, index) in ZKStore.playlistsParts" class="playlistPart">
       <div class="divideTitle">{{p.title}}</div>
       <div class="lists">
-        <div @click="checkDetail(index + p.begin)" v-for="(list, index) in ZKStore.playlists.slice(p.begin, p.begin + p.count)" class="item">
+        <div @contextmenu.prevent="showMenu($event, list, index + p.begin)" @click="checkDetail(index + p.begin)" v-for="(list, index) in ZKStore.playlists.slice(p.begin, p.begin + p.count)" class="item">
           <TargetBorder>
             <div class="img">
               <img referrerpolicy="no-referrer" :src="list.pic" alt="">
@@ -28,22 +32,30 @@
 </template>
 
 <script setup lang='ts'>
-import { useZKStore } from '../stores/useZKstore';
-import { clientInjectionKey, list_trace_bilibili_fav, playlistComponent } from '../types';
-import {computed, inject} from 'vue';
-import { normalClientInjectionKey } from '../types';
-import { type song } from '../types';
-import { ask, open } from '@tauri-apps/api/dialog';
-import { copyFile, exists } from '@tauri-apps/api/fs'
+import {useZKStore} from '../stores/useZKstore';
+import {
+  clientInjectionKey,
+  type list,
+  type list_trace_bilibili_fav,
+  normalClientInjectionKey,
+  type playlistComponent,
+  type song
+} from '@/types';
+import {computed, inject, onUnmounted, ref, shallowRef} from 'vue';
+import {ask, open} from '@tauri-apps/api/dialog';
+import {BaseDirectory, copyFile, exists, removeFile} from '@tauri-apps/api/fs'
 import TargetBorder from '../components/TargetBorder.vue'
 //@ts-ignore
 import path from 'path-browserify';
 import emitter from '@/emitter';
 import simplebar from "simplebar-vue";
 import 'simplebar-vue/dist/simplebar.min.css'
-import { showMsg } from '@/utils/u';
-import { WebviewWindow } from '@tauri-apps/api/window';
-import { AxiosResponse } from 'axios';
+import {showMsg} from '@/utils/u';
+import {WebviewWindow} from '@tauri-apps/api/window';
+import {AxiosResponse} from 'axios';
+import PreviewDialog from "@/components/Dialogs/PreviewDialog.vue";
+import MouseMenu from "@/components/MouseMenu.vue";
+
 let client = inject(clientInjectionKey)!;
 let normalClient = inject(normalClientInjectionKey)!;
 let ZKStore = useZKStore();
@@ -70,6 +82,53 @@ let PartVShow = computed(() => {
   }
   return r;
 })
+let mm = ref({
+  position: {
+    left: 20,
+    top: 40
+  },
+  show: false,
+  arg: {
+    playlist: <list>(null as any),
+    pi: -1
+  },
+  menulist: [
+    {
+      title: '删除',
+      ev: menu_deletePlaylist,
+      show: true,
+    },
+    {
+      title: '关闭',
+      ev: () => mm.value.show = false,
+    }
+  ]
+})
+function showMenu(e: any, playlist: list, pi: number) {
+  mm.value.position = {
+    left: e.x,
+    top: e.y
+  }
+  mm.value.arg.playlist = playlist;
+  mm.value.arg.pi = pi;
+  mm.value.menulist[0].show = pi < ZKStore.playlistsParts[0].count;
+  mm.value.show = true;
+}
+function menu_deletePlaylist() {
+  if (mm.value.arg.pi < ZKStore.playlistsParts[0].count) {
+    let p = ZKStore.playlists[mm.value.arg.pi];
+    if (p.originFilename.endsWith('json')) {
+      removeFile(`res/lists/${p.originFilename}`, {dir: BaseDirectory.Resource}).then(() => {
+        showMsg(ZKStore.message, 4000, `删除${p.title}成功`);
+        emitter.emit('refreshPlaylists',{notReset: false});
+      }).catch(() => {
+        showMsg(ZKStore.message, 4000, `删除${p.originFilename}文件失败`);
+      }).finally(() => {
+        mm.value.show = false;
+      })
+    }
+  }
+}
 function parseComponent(comIndex: number, components: playlistComponent[]) {
     // console.log(comIndex, components[comIndex], '$');
     let component = components[comIndex];
@@ -162,18 +221,28 @@ function parseComponent(comIndex: number, components: playlistComponent[]) {
         })
     }
 }
-function checkDetail(index: number) {
+function checkDetail(index: number, remote = false, raw: list = ({} as any)) {
     ZKStore.nowTab = 'Loading';
     ZKStore.loading.text = '';
-    if (ZKStore.playlist.listIndex === index) {
+    if (!remote) {
+      if (ZKStore.playlist.listIndex === index) {
         ZKStore.nowTab = 'PlaylistDetail';
-    }else {
+      }else {
         let list = ZKStore.playlists[index];
         ZKStore.playlist.listIndex = index
+        ZKStore.playlist.raw = list;
         ZKStore.playlist.songs = [];
         let components = list.playlist;
         let comIndex = 0;
         parseComponent(comIndex, components);
+      }
+    }else {
+      ZKStore.playlist.listIndex = -2;
+      ZKStore.playlist.songs = [];
+      ZKStore.playlist.raw = raw;
+      let components = raw.playlist;
+      let comIndex = 0;
+      parseComponent(comIndex, components);
     }
 }
 function importPlaylist() {
@@ -196,14 +265,14 @@ function importPlaylist() {
                             copyFile(fn, ZKStore.resourceDir + 'res/lists/' + path.basename(fn)).catch((reason: any) => {
                                 showMsg(ZKStore.message, 4000, reason);
                             })
-                            emitter.emit('refreshPlaylists')
+                            emitter.emit('refreshPlaylists', {notReset: true})
                         }
                     })
                 }else {
                     copyFile(fn, ZKStore.resourceDir + 'res/lists/' + path.basename(fn)).catch((reason: any) => {
                         showMsg(ZKStore.message, 4000, reason);
                     })
-                    emitter.emit('refreshPlaylists')
+                    emitter.emit('refreshPlaylists', {notReset: true})
                 }
             }).catch((reason: any) => {
                 showMsg(ZKStore.message, 4000, reason);
@@ -222,6 +291,14 @@ function testFunc() {
     })
     confirm.show();
 }
+function showPreviewDialog() {
+  ZKStore.dialog.dialogEl = shallowRef(PreviewDialog);
+  ZKStore.dialog.show = true;
+}
+emitter.on('checkDetail', ({index, remote, raw}) => {checkDetail(index, remote, raw)})
+onUnmounted(() => {
+  emitter.off('checkDetail');
+})
 </script>
 
 <style scoped>

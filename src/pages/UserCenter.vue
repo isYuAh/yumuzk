@@ -29,7 +29,7 @@ function checkStatus(refresh: boolean = false) {
       ZKStore.neteaseUser.uid = res.data.data.profile.userId;
       ZKStore.neteaseUser.vipType = res.data.data.profile.vipType;
       if (refresh) {
-        emitter.emit('refreshPlaylists');
+        emitter.emit('refreshPlaylists', {notReset: true});
       }
       saveConfig();
       mode.value = 'logined';

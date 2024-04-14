@@ -64,7 +64,7 @@
 </template>
 
 <script setup lang='ts'>
-import { inject, onUnmounted, ref, watch } from 'vue';
+import {inject, onUnmounted, ref, watch, watchEffect} from 'vue';
 import { tauri } from '@tauri-apps/api';
 import { AxiosError, AxiosResponse } from 'axios';
 import { clientInjectionKey, normalClientInjectionKey, type playSongParams } from '@/types';
@@ -157,6 +157,15 @@ function changeVolume(e: any) {
         songSource.value.volume = toVolume;
     }
 }
+watchEffect(() => {
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata!.title = ZKStore.play.song.title,
+    navigator.mediaSession.metadata!.artist = ZKStore.play.song.singer,
+    navigator.mediaSession.metadata!.artwork = [{
+      src: ZKStore.play.song.pic,
+    }]
+  }
+})
 function playSong({song, justtry = false}: playSongParams){
     ZKStore.play.song = {
         title: song.title,
@@ -178,6 +187,7 @@ function playSong({song, justtry = false}: playSongParams){
             lrc: []
         }
     }
+
     ZKStore.play.lang = 'origin';
     if (!justtry) {
         let findIndex = -1;
@@ -511,20 +521,19 @@ function changeCurTimeTo(to: number) {
 }
 
 function playPrevSong() {
-    let si = ZKStore.play.indexInPlaylist;
-    if (si <= 0 || si > ZKStore.play.playlist.length - 1) {
+    if (ZKStore.play.mode === 'list' || ZKStore.play.mode === '') {
+      let si = ZKStore.play.indexInPlaylist;
+      if (si <= 0 || si > ZKStore.play.playlist.length - 1) {
         playSong({song: ZKStore.play.playlist[ZKStore.play.playlist.length - 1]})
-    }else {
+      }else {
         playSong({song: ZKStore.play.playlist[si - 1]});
+      }
+    }else if(ZKStore.play.mode === 'rand') {
+      playSong({song: ZKStore.play.playlist[Math.floor(Math.random() * (ZKStore.play.playlist.length))]})
     }
 }
 function playNextSong() {
-    let si = ZKStore.play.indexInPlaylist;
-    if (si >= ZKStore.play.playlist.length - 1 || si < 0) {
-        playSong({song: ZKStore.play.playlist[0]})
-    }else {
-        playSong({song :ZKStore.play.playlist[si + 1]});
-    }
+  playEnded();
 }
 watch(() => ZKStore.play.status, (nv) => {
     if (!songSource.value) return;

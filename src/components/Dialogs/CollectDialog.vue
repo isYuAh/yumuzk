@@ -1,5 +1,5 @@
 <template>
-<div class="dialogCollectContainer">
+<div class="dialogPreviewContainer">
     <div class="header">收藏</div>
     <div class="content">
         <select ref="selectComponent" style="width: 400px" name="" id="">
@@ -14,8 +14,8 @@
 </template>
 
 <script setup lang='ts'>
-import { useZKStore } from '@/stores/useZKstore';
-import { showMsg } from '@/utils/u';
+import { useZKStore } from '@/stores/useZKstore.ts';
+import { showMsg } from '@/utils/u.ts';
 import { BaseDirectory, writeTextFile } from '@tauri-apps/api/fs';
 import { ref, toRaw } from 'vue';
 let ZKStore = useZKStore();
@@ -50,14 +50,14 @@ function cancel() {
 </script>
 
 <style scoped>
-.dialogCollectContainer {
+.dialogPreviewContainer {
     border: 1px;
     background-color: #fff;
     padding: 10px;
     border-radius: 6px;
     box-shadow: 0 0 5px rgba(0, 0, 0, .4)
 }
-.dialogCollectContainer .header {
+.dialogPreviewContainer .header {
     font-family: SourceSansCNM;
     font-size: 18px;
     margin-bottom: 10px;
@@ -74,5 +74,12 @@ function cancel() {
 }
 .dialogBtn:hover {
     cursor: pointer;
+}
+select, input {
+  margin: 5px 0;
+  font-family: SourceSansCNM;
+  font-size: 18px;
+  padding: 5px 10px;
+  border: 1px solid #000000;
 }
 </style>

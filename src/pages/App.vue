@@ -67,7 +67,18 @@ import emitter from '@/emitter';
 import { path } from '@tauri-apps/api';
 
 const axiosController = new AbortController();
-
+if ("mediaSession" in navigator) {
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: "Unforgettable",
+    artist: "Nat King Cole"
+  });
+  navigator.mediaSession.setActionHandler("play", () => ZKStore.play.status = 'play');
+  navigator.mediaSession.setActionHandler("pause", () => ZKStore.play.status = 'pause');
+  navigator.mediaSession.setActionHandler("seekbackward", (e) => console.log('$seekB', e));
+  navigator.mediaSession.setActionHandler("seekforward", (e) => console.log('$seekF', e));
+  navigator.mediaSession.setActionHandler("previoustrack", () => emitter.emit('playPrevSong'));
+  navigator.mediaSession.setActionHandler("nexttrack", () => emitter.emit('playNextSong'))
+}
 const ZKStore = useZKStore();
 const client = axios.create({
   adapter: axiosTauriApiAdapter,
@@ -84,7 +95,7 @@ const normalClient = axios.create({
   },
   signal: axiosController.signal
 });
-import CollectDialog from '@/components/CollectDialog.vue'
+import CollectDialog from '@/components/Dialogs/CollectDialog.vue'
 ZKStore.dialog.dialogEl = shallowRef(CollectDialog);
 // normalClient.interceptors.response.use(function (response) {
 //     return response;
@@ -101,7 +112,7 @@ ZKStore.dialog.dialogEl = shallowRef(CollectDialog);
 //   return Promise.reject(error);
 // });
 function turnToPlaylistDetail() {
-  if (ZKStore.playlist.listIndex >= 0) {
+  if ('title' in ZKStore.playlist.raw) {
     ZKStore.nowTab = 'PlaylistDetail'
   }
 }
@@ -143,13 +154,16 @@ onMounted(() => {
 provide(clientInjectionKey, client);
 provide(normalClientInjectionKey, normalClient);
 (async ()=> {
-  async function refreshPlaylists() {
+  async function refreshPlaylists({notReset}: {notReset: boolean}) {
     ZKStore.playlists = [];
     ZKStore.playlistsParts = [];
-    Object.assign(ZKStore.playlist, {
-      listIndex: -1,
-      songs: <song[]>[],
-    })
+    ZKStore.playlist.listIndex = -1;
+    if (!notReset) {
+      Object.assign(ZKStore.playlist, {
+        songs: <song[]>[],
+        raw: {}
+      })
+    }
     await readDir(`res/lists`, {dir: BaseDirectory.Resource}).then(res => {
       {
         loadLocalPlaylists(res)
@@ -165,7 +179,7 @@ provide(normalClientInjectionKey, normalClient);
         title: playlist.name,
         pic: playlist.coverImgUrl,
         intro: 'FROM NETEASE',
-        originFilename: 't.t',
+        originFilename: 'REMOTE',
         playlist: [{
           type: 'trace_netease_playlist',
           id: playlist.id
@@ -184,7 +198,7 @@ provide(normalClientInjectionKey, normalClient);
         title: playlist.name,
         pic: playlist.coverImgUrl,
         intro: 'NETEASE RECOMMEND',
-        originFilename: 't.t',
+        originFilename: 'REMOTE',
         playlist: [{
           type: 'trace_netease_playlist',
           id: playlist.id
@@ -229,9 +243,9 @@ provide(normalClientInjectionKey, normalClient);
       count: c
     })
   }
-  refreshPlaylists();
-  emitter.on('refreshPlaylists', () => {
-    refreshPlaylists();
+  refreshPlaylists({notReset: false});
+  emitter.on('refreshPlaylists', (conf) => {
+    refreshPlaylists(conf);
   });
 })();
 onUnmounted(() => {
