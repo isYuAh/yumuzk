@@ -19,7 +19,8 @@
           <div @click="ZKStore.nowTab = 'UserCenter'" :class="{tab: true, active: ZKStore.nowTab === 'UserCenter'}">
             <div class="text">{{ ZKStore.neteaseUser.nickname || '用户' }}</div>
             <img v-if="ZKStore.neteaseUser.avatarUrl" style="border-radius: 50%;margin-left: 4px;margin-top:6px; height: 28px;" :src="ZKStore.neteaseUser.avatarUrl" alt="">
-            </div>
+          </div>
+          <div @click="ZKStore.nowTab = 'Settings'" :class="{tab: true, active: ZKStore.nowTab === 'Settings'}">设置</div>
         </div>
       </Transition>
       <div class="controlbtn">
@@ -35,6 +36,7 @@
             <Loading key="Loading" v-else-if="ZKStore.nowTab === 'Loading'"></Loading>
             <Search key="Search" v-else-if="ZKStore.nowTab === 'Search'"></Search>
             <UserCenter key="UserCenter" v-else-if="ZKStore.nowTab === 'UserCenter'"></UserCenter>
+            <Settings key="Settings" v-else-if="ZKStore.nowTab === 'Settings'"></Settings>
         </Transition>
     </div>
     <Playbar></Playbar>
@@ -80,6 +82,10 @@ if ("mediaSession" in navigator) {
   navigator.mediaSession.setActionHandler("nexttrack", () => emitter.emit('playNextSong'))
 }
 const ZKStore = useZKStore();
+//监听cookie
+watch(() => ZKStore.neteaseUser.cookie, (nv) => {
+  document.cookie = nv;
+})
 const client = axios.create({
   adapter: axiosTauriApiAdapter,
   headers: {
@@ -96,6 +102,7 @@ const normalClient = axios.create({
   signal: axiosController.signal
 });
 import CollectDialog from '@/components/Dialogs/CollectDialog.vue'
+import Settings from "@/pages/Settings.vue";
 ZKStore.dialog.dialogEl = shallowRef(CollectDialog);
 // normalClient.interceptors.response.use(function (response) {
 //     return response;

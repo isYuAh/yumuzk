@@ -30,6 +30,7 @@ import {inject, ref} from 'vue';
 import emitter from "@/emitter";
 import {normalClientInjectionKey, playlistComponent, type song} from "@/types";
 import {AxiosResponse} from "axios";
+import {showMsg} from "@/utils/u.ts";
 let ZKStore = useZKStore();
 let normalClient = inject(normalClientInjectionKey)!;
 let previewLink = ref('');
@@ -37,6 +38,7 @@ let asData = ref(true);
 let selectComponent = ref<HTMLSelectElement>();
 function preview() {
   if (selectComponent.value) {
+    showMsg(ZKStore.message, 4000, '加载中')
     if (selectComponent.value.value === 'auto') {
       if (previewLink.value.startsWith('https://music.163.com/#/playlist?id=') ||
         previewLink.value.startsWith('music.163.com/#/playlist?id=')
@@ -45,7 +47,7 @@ function preview() {
         if (match) {
           console.log('$match', match[1]);
           normalClient.get(`${ZKStore.config.neteaseApi.url}playlist/detail?id=${match[1]}`).then((res: AxiosResponse) => {
-            let playlist = [];
+            let playlist = <playlistComponent[]>[];
             if (!asData.value) {
               playlist = <playlistComponent[]>[{
                 type: "trace_netease_playlist",
@@ -153,7 +155,7 @@ function preview() {
       })
     }else if (selectComponent.value.value === 'netease') {
       normalClient.get(`${ZKStore.config.neteaseApi.url}playlist/detail?id=${previewLink.value}`).then((res: AxiosResponse) => {
-        let playlist = [];
+        let playlist = <playlistComponent[]>[];
         if (!asData.value) {
           playlist = <playlistComponent[]>[{
             type: "trace_netease_playlist",

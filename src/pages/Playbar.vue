@@ -8,8 +8,36 @@
     @pause="whenPause"
     autoplay ref="songSource"></video>
 </div>
+
 <div class="play forbidSelect">
-    <div v-show="ZKStore.play.show_songface" class="songface">
+  <MouseMenu :arg="mm.arg" :show="mm.show" :menulist="mm.menulist"
+             :position="mm.position"
+  />
+  <Transition name="heightAnim">
+    <div class="playlistSonglist" v-show="ZKStore.showPlaylistSonglist">
+      <div class="fourHeightContainer">
+        <div class="playlistSonglistTitle">播放列表</div>
+        <div class="songs">
+          <div class="container">
+            <simplebar data-auto-hide class="simplebar">
+              <div class="songTable forbidSelect">
+                <div
+                    @dblclick="playSong({song, justtry: false})"
+                    :class="{song: true, active: ZKStore.play.indexInPlaylist === index}"
+                    :data-song="song"
+                    @contextmenu.prevent="showMenu($event, index)"
+                    v-for="(song, index) in ZKStore.play.playlist">
+                  <div class="songInfo title">{{ song.title }}<sub>{{ song.type }}</sub></div>
+                  <div class="songInfo author">{{ song.singer }}</div>
+                </div>
+              </div>
+            </simplebar>
+          </div>
+        </div>
+      </div>
+    </div>
+  </Transition>
+    <div @click="ZKStore.showFullPlay = true" v-show="ZKStore.play.show_songface" class="songface">
         <img ref="songfaceImg" referrerpolicy="no-referrer" src="" alt="">
     </div>
     <div ref="progress_tooltip" style="display: none" class="progress-tooltip">00:00</div>
@@ -18,7 +46,7 @@
         <div ref="progressFill" :style="{width: `${ZKStore.play.progress}%`}" class="fill"></div>
     </div>
     <div ref="songInformation" class="songInformation">
-        <div class="title">{{ ZKStore.play.song.title }}</div>
+        <div @click="ZKStore.showFullPlay = true" class="title">{{ ZKStore.play.song.title }}</div>
         <div class="singer">{{ ZKStore.play.song.singer }}</div>
     </div>
     <div class="controlButtons">
@@ -56,9 +84,11 @@
         </Transition>
     </div>
     <div class="fullPlayBtn">
-        <div v-show="ZKStore.play.song.title" @click="ZKStore.showFullPlay = true" class="fullPlayBtn">
-            <svg t="1711336037990" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1699"><path d="M251.069046 983.355077l471.355077-471.355077L251.069046 40.644923A23.809313 23.809313 0 0 1 284.740267 6.973703l488.190687 488.190687a23.809313 23.809313 0 0 1 0 33.67122L284.740267 1017.026297A23.809313 23.809313 0 0 1 251.069046 983.355077z" fill="currentColor" p-id="1700"></path></svg>
-        </div>
+        <SonglistTooltip text="播放列表">
+          <div @click="ZKStore.showPlaylistSonglist = !ZKStore.showPlaylistSonglist" class="fullPlayBtn">
+            <svg fill="currentColor" t="1713269837175" class="icon" viewBox="0 0 1029 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1494" ><path d="M1018.125653 171.15136c-57.337173-65.010347-130.839893-115.985067-212.432213-147.75296-22.050133-8.864427-46.298453 2.218667-55.125333 23.64416-2.2016 5.1712-2.935467 10.3424-2.935467 15.5136v522.304853c-39.69024-31.030613-88.203947-48.018773-138.922667-48.018773-123.48416 0-224.18432 99.734187-224.18432 222.368427 0 122.630827 100.70016 222.365013 224.18432 222.365013 123.48416 0 224.191147-99.734187 224.191147-222.365013 0-2.218667 0-4.437333-0.740693-6.652587 0-1.477973 0.740693-2.21184 0.740693-3.693227V129.78176c45.568 25.11872 86.7328 58.361173 121.279147 96.77824 15.435093 17.732267 42.62912 19.21024 60.27264 3.69664 17.63328-14.779733 19.838293-41.376427 3.672746-59.10528zM608.703147 897.355093c-76.445013 0-138.922667-62.0544-138.922667-137.413973 0-75.352747 62.481067-137.407147 138.922667-137.407147 76.445013 0 138.922667 62.0544 138.922666 137.407147 0 75.362987-62.47424 137.413973-138.922666 137.413973zM42.728107 261.280427h491.73504c23.524693 0 42.632533-19.206827 42.632533-42.110294 0-23.640747-19.111253-42.10688-42.632533-42.10688H42.728107c-23.528107 0-42.632533 19.206827-42.632534 42.10688 0 22.903467 19.104427 42.110293 42.632534 42.110294z m299.158186 190.600533H42.728107c-23.528107 0-42.632533 19.21024-42.632534 42.110293s19.10784 42.110293 42.632534 42.110294h299.158186c23.52128 0 42.632533-19.21024 42.632534-42.110294s-19.114667-42.110293-42.632534-42.110293z m-127.901013 275.5584H42.728107c-23.528107 0-42.632533 19.21024-42.632534 42.110293 0 22.903467 19.10784 42.10688 42.632534 42.10688h171.257173c23.524693 0 42.632533-19.203413 42.632533-42.10688 0-22.900053-19.10784-42.110293-42.632533-42.110293z" p-id="1495"></path></svg>
+          </div>
+        </SonglistTooltip>
     </div>
 </div>
 </template>
@@ -71,10 +101,14 @@ import { clientInjectionKey, normalClientInjectionKey, type playSongParams } fro
 import { minmax, secondsToMmss, getFormattedDateWithPadding } from '@/utils/u';
 import { saveConfig, useZKStore } from '@/stores/useZKstore'
 import emitter from '@/emitter'
+import simplebar from 'simplebar-vue';
+import 'simplebar-vue/dist/simplebar.min.css'
 //@ts-ignore
 import md5 from 'md5'
 //@ts-ignore
 import Netease from '../utils/netease/netease.js'
+import SonglistTooltip from "@/components/SonglistTooltip.vue";
+import MouseMenu from "@/components/MouseMenu.vue";
 let songSource = ref<HTMLVideoElement>();
 let progressFill = ref<HTMLDivElement>();
 let progressChooseFill = ref<HTMLDivElement>();
@@ -166,6 +200,39 @@ watchEffect(() => {
     }]
   }
 })
+
+//菜单相关
+let mm = ref({
+  position: {
+    left: 20,
+    top: 40
+  },
+  show: false,
+  arg: {
+    si: -1
+  },
+  menulist: [
+    {
+      title: '删除',
+      ev: deleteSongInPlaylistSonglist,
+      show: true,
+    },
+    {
+      title: '关闭',
+      ev: () => mm.value.show = false,
+    }
+  ]
+})
+function showMenu(e: any, si: number) {
+  mm.value.position = {
+    left: e.x,
+    top: e.y
+  }
+  mm.value.arg.si = si;
+  mm.value.show = true;
+}
+//END菜单相关
+
 function playSong({song, justtry = false}: playSongParams){
     ZKStore.play.song = {
         title: song.title,
@@ -519,7 +586,20 @@ function changeCurTimeTo(to: number) {
         songSource.value.currentTime = to;
     }
 }
-
+function deleteSongInPlaylistSonglist(index?: number | object) {
+  console.log(index, mm.value.arg.si)
+  if (index === undefined || typeof index !== 'number') {
+    index = mm.value.arg.si;
+  }
+  if (index < 0 || index >= ZKStore.play.playlist.length) {
+    return
+  }
+  ZKStore.play.playlist.splice(index, 1);
+  if (ZKStore.play.indexInPlaylist === index) {
+    playSong({song: ZKStore.play.playlist[minmax(index, 0, ZKStore.play.playlist.length - 1)]});
+  }
+  mm.value.show = false;
+}
 function playPrevSong() {
     if (ZKStore.play.mode === 'list' || ZKStore.play.mode === '') {
       let si = ZKStore.play.indexInPlaylist;
@@ -617,6 +697,7 @@ onUnmounted(() => {
     background-color: #d2d3d4;
 }
 .play .songface {
+  cursor: pointer;
     margin-left: 10px;
     width: 48px;
     height: 48px;
@@ -633,6 +714,7 @@ onUnmounted(() => {
     padding-right: 20px;
 }
 .play .songInformation .title {
+  cursor: pointer;
     font-family: PingFang SC;
     font-size: 16px;
     white-space: nowrap;
@@ -717,13 +799,43 @@ onUnmounted(() => {
     color: #18191C;
 }
 .play .fullPlayBtn {
-    position: absolute;
-    /* margin-left: 20px; */
-    right: 10px;
-    width: 24px;
-    height: 24px;
+  cursor: pointer;
+  position: absolute;
+  /* margin-left: 20px; */
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  color: #61666D;
 }
-.play .fullPlayBtn svg {
-    transform: rotate(-90deg);
+.play .fullPlayBtn:hover {
+  color: #18191C;
+}
+.play .playlistSonglist {
+  box-shadow: 0 0 10px rgba(0,0,0,.2);
+  left: 0;
+  right: 0;
+  background-color: #fff;
+  position: absolute;
+  bottom: 64px;
+}
+.play .playlistSonglist .fourHeightContainer {
+  height: 400px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.fourHeightContainer .playlistSonglistTitle {
+  margin-top: 10px;
+  margin-left: 10px;
+  padding-bottom: 10px;
+  font-size: 20px;
+  font-family: SourceSansCNM;
+  border-bottom: 1px solid #f2f3f4;
+}
+.play .songs, .play .container, .simplebar {
+  height: 100%;
+}
+.songTable .song {
+  grid-template-columns: 12fr 10fr;
 }
 </style>

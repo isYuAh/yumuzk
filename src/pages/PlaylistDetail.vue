@@ -317,9 +317,6 @@ function collectPlaylist() {
 .songTable .song {
     grid-template-columns: 12fr 10fr;
 }
-.songTable .song .deal {
-    cursor: pointer;
-}
 </style>
 <!-- playBar -->
 <!-- <style scoped>

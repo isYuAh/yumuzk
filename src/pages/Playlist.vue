@@ -186,23 +186,21 @@ function parseComponent(comIndex: number, components: playlistComponent[]) {
         })
     }else if (component.type === 'trace_netease_playlist') {
         normalClient.get(ZKStore.config.neteaseApi.url + 'playlist/detail', {
-            params: {
-                id: component.id,
-            }
+          params: {
+              id: component.id,
+          }
         }).then(res => {
-            if (res.data.playlist.tracks) {
-                ZKStore.playlist.songs.push(...res.data.playlist.tracks.map((track: any) => {
-                    return <song>{
-                        pic: track.al.picUrl,
-                        title: track.name,
-                        type: 'netease',
-                        singer: track.ar.map((ar: any) => (ar.name)).join(' & '),
-                        id: track.id,
-                    }
-                }))
+          ZKStore.playlist.songs.push(...res.data.playlist.tracks.map((track: any) => {
+            return <song>{
+              pic: track.al.picUrl,
+              title: track.name,
+              type: 'netease',
+              singer: track.ar.map((ar: any) => (ar.name)).join(' & '),
+              id: track.id,
             }
-            comIndex++;
-            parseComponent(comIndex, components);
+          }))
+          comIndex++;
+          parseComponent(comIndex, components);
         })
     }else if (component.type === 'trace_qq_playlist') {
         if (!ZKStore.config.qqApi.enable) {

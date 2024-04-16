@@ -19,6 +19,22 @@
     margin-top: 5px;
     opacity: 0;
 }
+.heightAnim-enter-active,
+.heightAnim-leave-active {
+    transition: all .25s;
+    overflow: hidden;
+    position: absolute;
+}
+.heightAnim-enter-from,
+.heightAnim-leave-to {
+    height: 0;
+    opacity: 0;
+}
+.heightAnim-enter-to,
+.heightAnim-leave-from {
+    height: 400px;
+    opacity: 1;
+}
 .playcontroller-enter-active,
 .playcontroller-leave-active {
     transition: all .2s;

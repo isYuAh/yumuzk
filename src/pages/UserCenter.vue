@@ -13,21 +13,21 @@ let normalClient = inject(normalClientInjectionKey)!;
 let mode = ref('');
 let key = ref('');
 let timer = <NodeJS.Timeout>(-1 as any);
-function checkStatus(refresh: boolean = false) {
-  if (Object.values(ZKStore.neteaseUser).every(s => s)) {
+function checkStatus(refresh: boolean = false, force = false) {
+  if (!force && Object.values(ZKStore.neteaseUser).every(s => s)) {
     mode.value = 'logined';
     return;
   }
   normalClient.post(ZKStore.config.neteaseApi.url + `login/status?timestamp=${Date.now()}`, {
     cookie: ZKStore.neteaseUser.cookie
   }).then((res: AxiosResponse) => {
-    console.log(res.data);
+    console.log(res.data)
     if (res.data.data.account.status == 0) {
-      console.log('$profile', res.data.data.profile);
       ZKStore.neteaseUser.nickname = res.data.data.profile.nickname;
       ZKStore.neteaseUser.avatarUrl = res.data.data.profile.avatarUrl;
       ZKStore.neteaseUser.uid = res.data.data.profile.userId;
       ZKStore.neteaseUser.vipType = res.data.data.profile.vipType;
+      ZKStore.neteaseUser.signature = res.data.data.profile.signature || '暂无简介';
       if (refresh) {
         emitter.emit('refreshPlaylists', {notReset: true});
       }
@@ -105,11 +105,14 @@ function logout() {
     checkStatus(true);
   })
 }
+function refreshStatus() {
+  checkStatus(false, true);
+}
 onMounted(() => checkStatus());
 </script>
 
 <template>
-<div class="UserCenter">
+<div class="UserCenterContainer">
   <div v-if="mode === 'unlogin'" class="tab">
     <div class="unloginContainer">
       <div class="text">请扫码登陆</div>
@@ -118,8 +121,17 @@ onMounted(() => checkStatus());
     </div>
   </div>
   <div v-if="mode === 'logined'" class="tab">
-    nickname: {{ZKStore.neteaseUser.nickname}}
-    <button @click="logout">退出登录</button>
+    <div class="loginedContainer">
+      <div class="userInfo">
+        <img :src="ZKStore.neteaseUser.avatarUrl" class="avatar"  :alt="ZKStore.neteaseUser.nickname"/>
+        <div class="user">
+          <div class="nickname">{{ZKStore.neteaseUser.nickname}}</div>
+          <div class="signature">{{ZKStore.neteaseUser.signature}}</div>
+        </div>
+      </div>
+      <button class="userCenterControlBtn logoutBtn" @click="logout">退出登录</button>
+      <button class="userCenterControlBtn refreshBtn" @click="refreshStatus">刷新状态</button>
+    </div>
   </div>
 </div>
 </template>
@@ -140,5 +152,44 @@ onMounted(() => checkStatus());
 .UserCenterContainer {
   width: 100%;
   height: 100%;
+}
+.loginedContainer {
+  padding: 40px;
+}
+.loginedContainer .userInfo {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  grid-template-rows: 200px 1fr;
+  grid-column-gap: 40px;
+}
+.loginedContainer .userInfo .avatar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+.loginedContainer .userInfo .nickname {
+  margin-top: 10px;
+  font-family: SourceSansCNM;
+  font-size: 28px;
+}
+.loginedContainer .userInfo .signature {
+  margin-left: 20px;
+  margin-top: 15px;
+  font-family: SourceSansCNM;
+  font-size: 16px;
+}
+.userCenterControlBtn {
+  cursor: pointer;
+  margin-top: 20px;
+  margin-right: 20px;
+  padding: 7px 14px;
+  border: none;
+  color: #fff;
+  background-color: #18191C;
+  transition: all .25s;
+}
+.logoutBtn:hover {
+  background-color: #333;
 }
 </style>

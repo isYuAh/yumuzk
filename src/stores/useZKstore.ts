@@ -30,6 +30,7 @@ export const useZKStore = defineStore('ZK', {
     },
     resourceDir: '',
     showFullPlay: false,
+    showPlaylistSonglist: false,
     playlist: {
       listIndex: -1,
       raw: <list>{},
@@ -79,7 +80,8 @@ export const useZKStore = defineStore('ZK', {
       avatarUrl: '',
       vipType: '0',
       uid: '',
-      cookie: ''
+      cookie: '',
+      signature: '',
     }
   }),
   // 在这里可以定义 getters、mutations 和 actions

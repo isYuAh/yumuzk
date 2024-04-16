@@ -519,7 +519,20 @@ function getSongDetail(ins, id) {
         }
     })
 }
+export function allTrack(ins, ids) {
+    return ins.post('https://music.163.com/weapi/v3/song/detail?csrf_token=', Gen({
+        c: ids,
+        csrf_token: ""
+    }), {
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Origin": "https://music.163.com",
+            "Referer": "https://music.163.com",
+        }
+    })
+}
 export default {
     getSongUrl,
     getSongDetail,
+    allTrack
 }
