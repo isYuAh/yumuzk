@@ -203,7 +203,7 @@ function dealSearchResultSong(_e:any, song: song) {
     border: 1px solid #18191C;
     background-color: #fff;
     border-top: 0;
-    z-index: 2;
+    z-index: 102;
     max-height: 320px;
 }
 .searchBar .searchInputContainer .suggestBar .suggest {

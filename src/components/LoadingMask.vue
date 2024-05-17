@@ -29,7 +29,7 @@ defineProps<{
     pointer-events: none;
 }
 .mask.active {
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: #fff;
     pointer-events: all;
 }
 </style>
