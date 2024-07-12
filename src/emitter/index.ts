@@ -1,4 +1,4 @@
-import {checkDetailParams, type playSongParams, refreshPlaylistsParams} from '@/types';
+import {addSongToParams, checkDetailParams, type playSongParams, refreshPlaylistsParams} from '@/types';
 import mitt from 'mitt'
 const emitter = mitt<{
     'playSong': playSongParams,
@@ -9,5 +9,6 @@ const emitter = mitt<{
     'updateActiveLrcIndex': void,
     'refreshPlaylists': refreshPlaylistsParams,
     'checkDetail': checkDetailParams,
+    'addSongTo': addSongToParams,
 }>();
 export default emitter;

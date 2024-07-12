@@ -1,12 +1,15 @@
 <template>
 <div class="songEl">
     <video
-    @ended="playEnded"
-    @timeupdate="updateTime"
-    @volumechange="changeVolumeInfo"
-    @play="whenPlay"
-    @pause="whenPause"
-    autoplay ref="songSource"></video>
+        @loadeddata="whenLoadData"
+        @error="videoOnError"
+        @ended="playEnded"
+        @timeupdate="updateTime"
+        @volumechange="changeVolumeInfo"
+        @play="whenPlay"
+        @pause="whenPause"
+        preload="auto"
+        autoplay ref="songSource"></video>
 </div>
 
 <div class="play forbidSelect">
@@ -98,7 +101,7 @@ import {inject, onUnmounted, ref, watch, watchEffect} from 'vue';
 import { tauri } from '@tauri-apps/api';
 import { AxiosError, AxiosResponse } from 'axios';
 import { clientInjectionKey, normalClientInjectionKey, type playSongParams } from '@/types';
-import { minmax, secondsToMmss, getFormattedDateWithPadding } from '@/utils/u';
+import { minmax, secondsToMmss, getFormattedDateWithPadding, showMsg } from '@/utils/u';
 import { saveConfig, useZKStore } from '@/stores/useZKstore'
 import emitter from '@/emitter'
 import simplebar from 'simplebar-vue';
@@ -117,9 +120,24 @@ let volumeProgressFill = ref<HTMLDivElement>();
 let ZKStore = useZKStore();
 let songfaceImg = ref<HTMLImageElement>();
 let songInformation = ref<HTMLDivElement>();
+let keepCurrentTimeCausedByError = ref(-1);
 let client = inject(clientInjectionKey)!;
 let normalClient = inject(normalClientInjectionKey)!;
 // let lrcConfig = ref<song_lrc_item[]>([])
+function videoOnError(e: Event) {
+  console.log(e);
+  showMsg(ZKStore.message, 5000, JSON.stringify(e));
+  if (songSource.value) {
+    keepCurrentTimeCausedByError.value = songSource.value.currentTime;
+    playSong({song: ZKStore.play.song.origin})
+  }
+}
+function whenLoadData() {
+  if (songSource.value && keepCurrentTimeCausedByError.value > -1) {
+    songSource.value.currentTime = keepCurrentTimeCausedByError.value;
+    keepCurrentTimeCausedByError.value = -1;
+  }
+}
 function whenPlay() {
   if (ZKStore.play.status !== 'play') {
     ZKStore.play.status = 'play';
@@ -740,6 +758,7 @@ onUnmounted(() => {
     display: flex;
 }
 .play .controlButtons .playbutton {
+    cursor: pointer;
     width: 24px;
     height: 24px;
     color: #444;

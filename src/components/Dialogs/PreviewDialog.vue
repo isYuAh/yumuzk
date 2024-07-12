@@ -14,7 +14,7 @@
         <input style="width: 400px" v-model="previewLink" type="text" />
       </div>
       <div>
-        <input type="checkbox" id="asData" v-model="asData" /><label for="asData">作为data类型</label>
+        <input type="checkbox" id="asData" v-model="asData" /><label class="asDataLabel" for="asData">作为data类型</label>
       </div>
     </div>
     <div class="footer">
@@ -86,7 +86,7 @@ function preview() {
         let match = previewLink.value.match(/id=(\d+)/);
         if (match) {
           console.log('$match', match[1]);
-          normalClient.post(ZKStore.config.qqApi.url + "api/y/get_song", {
+          normalClient.post(ZKStore.config.qqApi.url + "api/y/get_playlistDetail", {
             type: "qq",
             id: match[1],
           }).then((res: AxiosResponse) => {
@@ -128,7 +128,7 @@ function preview() {
         }
       })
     }else if (selectComponent.value.value === 'qq') {
-      normalClient.post(ZKStore.config.qqApi.url + "api/y/get_song", {
+      normalClient.post(ZKStore.config.qqApi.url + "api/y/get_playlistDetail", {
         type: "qq",
         id: previewLink.value,
       }).then((res: AxiosResponse) => {
@@ -228,5 +228,10 @@ select, input {
   font-size: 18px;
   padding: 5px 10px;
   border: 1px solid #000000;
+}
+
+.asDataLabel {
+  vertical-align: text-top;
+  padding-left: 2px;
 }
 </style>

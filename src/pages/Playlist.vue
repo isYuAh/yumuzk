@@ -41,9 +41,9 @@ import {
   type playlistComponent,
   type song
 } from '@/types';
-import {computed, inject, onUnmounted, ref, shallowRef} from 'vue';
+import {computed, inject, onUnmounted, ref, shallowRef, toRaw} from 'vue';
 import {ask, open} from '@tauri-apps/api/dialog';
-import {BaseDirectory, copyFile, exists, removeFile} from '@tauri-apps/api/fs'
+import {BaseDirectory, copyFile, exists, removeFile, writeTextFile} from '@tauri-apps/api/fs'
 import TargetBorder from '../components/TargetBorder.vue'
 //@ts-ignore
 import path from 'path-browserify';
@@ -51,10 +51,10 @@ import emitter from '@/emitter';
 import simplebar from "simplebar-vue";
 import 'simplebar-vue/dist/simplebar.min.css'
 import {showMsg} from '@/utils/u';
-import {WebviewWindow} from '@tauri-apps/api/window';
 import {AxiosResponse} from 'axios';
 import PreviewDialog from "@/components/Dialogs/PreviewDialog.vue";
 import MouseMenu from "@/components/MouseMenu.vue";
+import AddSongToDialog from '@/components/Dialogs/addSongToDialog.vue';
 
 let client = inject(clientInjectionKey)!;
 let normalClient = inject(normalClientInjectionKey)!;
@@ -99,6 +99,11 @@ let mm = ref({
       show: true,
     },
     {
+      title: "添加歌曲",
+      ev: showAddSongToDialog,
+      show: true,
+    },
+    {
       title: '关闭',
       ev: () => mm.value.show = false,
     }
@@ -110,8 +115,9 @@ function showMenu(e: any, playlist: list, pi: number) {
     top: e.y
   }
   mm.value.arg.playlist = playlist;
-  mm.value.arg.pi = pi;
+  mm.value.arg.pi = pi; //playlist Index
   mm.value.menulist[0].show = pi < ZKStore.playlistsParts[0].count;
+  mm.value.menulist[1].show = pi < ZKStore.playlistsParts[0].count;
   mm.value.show = true;
 }
 function menu_deletePlaylist() {
@@ -243,6 +249,33 @@ function checkDetail(index: number, remote = false, raw: list = ({} as any)) {
       parseComponent(comIndex, components);
     }
 }
+function addSongTo(song: song, save: boolean) {
+  if (!song.type || mm.value.arg.pi < 0) {
+    return;
+  }
+  let pl = mm.value.arg.playlist;
+  let components = pl.playlist;
+  let first = components[0];
+  let originFn = pl.originFilename;
+  if (first.type === 'data') {
+    first.songs.unshift(song);
+  }else {
+    components.unshift({
+      type: "data",
+      songs: [song],
+    })
+  }
+  if (mm.value.arg.pi === ZKStore.playlist.listIndex) {
+    ZKStore.playlist.songs.unshift(song)
+  }
+  if (save) {
+    writeTextFile(`res/lists/${originFn}`, JSON.stringify(toRaw(ZKStore.playlists[mm.value.arg.pi])), {dir: BaseDirectory.Resource}).then(() => {
+      showMsg(ZKStore.message, 4000, '添加成功');
+    }).catch(() => {
+      showMsg(ZKStore.message, 4000, `写入文件${originFn}失败`);
+    })
+  }
+}
 function importPlaylist() {
     open({
         filters: [{
@@ -281,19 +314,17 @@ function importPlaylist() {
     })
 }
 function testFunc() {
-    let confirm = new WebviewWindow('confirm', {
-        decorations: false,
-        resizable: false,
-        url:'/dialog/confirm',
-        transparent: true
-    })
-    confirm.show();
+}
+function showAddSongToDialog() {
+  ZKStore.dialog.dialogEl = shallowRef(AddSongToDialog);
+  ZKStore.dialog.show = true;
 }
 function showPreviewDialog() {
   ZKStore.dialog.dialogEl = shallowRef(PreviewDialog);
   ZKStore.dialog.show = true;
 }
-emitter.on('checkDetail', ({index, remote, raw}) => {checkDetail(index, remote, raw)})
+emitter.on('addSongTo', ({song,save}) => addSongTo(song,save))
+emitter.on('checkDetail', ({index,remote,raw}) => checkDetail(index,remote,raw))
 onUnmounted(() => {
   emitter.off('checkDetail');
 })

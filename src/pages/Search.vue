@@ -16,7 +16,7 @@
             <div v-show="showSuggestBar && searchInput!.value" class="suggestBar">
                 <div
                 @click="suggestSelected = index;search()"
-                v-for="suggest, index in suggests.slice(virtualSuggestStart, virtualSuggestStart + 10)" :class="{suggest:true, active: suggestSelected === index}">{{ suggest }}</div>
+                v-for="(suggest, index) in suggests.slice(virtualSuggestStart, virtualSuggestStart + 10)" :class="{suggest:true, active: suggestSelected === index}">{{ suggest }}</div>
             </div>
         </div>
     </div>

@@ -131,6 +131,10 @@ export type checkDetailParams = {
 export type refreshPlaylistsParams = {
     notReset: boolean
 }
+export type addSongToParams = {
+    song: song,
+    save: boolean
+}
 
 export type messageController = {
     show: boolean,

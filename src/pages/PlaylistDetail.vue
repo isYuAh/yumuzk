@@ -70,7 +70,7 @@ import { showMsg } from '@/utils/u';
 let ZKStore = useZKStore();
 let filter = ref('');
 function playAll() {
-    ZKStore.play.mode = 'list';
+    // ZKStore.play.mode = 'list';
     ZKStore.play.playlist = structuredClone(toRaw(ZKStore.playlist.songs))
     if (ZKStore.play.playlist[0]) {
         emitter.emit('playSong',{song: ZKStore.play.playlist[0]})
