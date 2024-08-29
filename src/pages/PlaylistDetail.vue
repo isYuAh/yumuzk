@@ -38,15 +38,14 @@
             <div class="container">
                 <simplebar data-auto-hide class="simplebar">
                     <div class="songTable forbidSelect">
-                        <div 
-                            v-show="song.title.includes(filter) || song.singer.includes(filter)" 
-                            @dblclick="playSong_withCheck(song)" 
+                        <div
+                            @dblclick="playSong_withCheck(ITEM.item)"
                             class="song" 
-                            @contextmenu.prevent="showMenu($event, song, index)"
-                            :data-song="song"
-                            v-for="(song, index) in ZKStore.playlist.songs">
-                            <div class="songInfo title">{{ song.title }}<sub>{{ song.type }}</sub></div>
-                            <div class="songInfo author">{{ song.singer }}</div>
+                            @contextmenu.prevent="showMenu($event, ITEM.item, ITEM.refIndex)"
+                            :data-song="ITEM.item"
+                            v-for="ITEM in showingSonglist">
+                            <div class="songInfo title">{{ ITEM.item.title }}<sub>{{ ITEM.item.type }}</sub></div>
+                            <div class="songInfo author">{{ ITEM.item.singer }}</div>
                         </div>
                     </div>
                 </simplebar>
@@ -61,14 +60,28 @@ import { list_data, type song } from '@/types'
 import MouseMenu from '@/components/MouseMenu.vue';
 import simplebar from 'simplebar-vue';
 import 'simplebar-vue/dist/simplebar.min.css'
-import { ref, toRaw, watch } from 'vue';
+import {computed, ref, toRaw, watch} from 'vue';
 import { useZKStore } from '../stores/useZKstore';
 import emitter from '@/emitter';
 import '@/assets/songlist.css'
 import { BaseDirectory, writeTextFile } from '@tauri-apps/api/fs';
 import { showMsg } from '@/utils/u';
+import Fuse from "fuse.js";
 let ZKStore = useZKStore();
 let filter = ref('');
+let FuseVal = ref(new Fuse(ZKStore.playlist.songs, {
+  keys: ['title', 'singer']
+}))
+// console.dir('$FuseVal', FuseVal.value)
+let showingSonglist = computed(() => {
+  // console.log('$filterValue', filter.value)
+  if (!filter.value) {
+    return ZKStore.playlist.songs.map((element, index) => ({item: element, refIndex: index}))
+  }else {
+    // console.log('$fvSearch', FuseVal.value.search(filter.value))
+    return FuseVal.value.search(filter.value)
+  }
+})
 function playAll() {
     // ZKStore.play.mode = 'list';
     ZKStore.play.playlist = structuredClone(toRaw(ZKStore.playlist.songs))
