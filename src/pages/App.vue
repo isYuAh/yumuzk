@@ -199,11 +199,11 @@ provide(normalClientInjectionKey, normalClient);
       })
     }
     {
-      let res = await normalClient.get(`${ZKStore.config.neteaseApi.url}top/playlist`);
-      let c = res.data.playlists.length;
-      ZKStore.playlists.push(...res.data.playlists.map((playlist: any) => ({
+      let res = await normalClient.get(`${ZKStore.config.neteaseApi.url}personalized`);
+      let c = res.data.result.length;
+      ZKStore.playlists.push(...res.data.result.map((playlist: any) => ({
         title: playlist.name,
-        pic: playlist.coverImgUrl,
+        pic: playlist.picUrl,
         intro: 'NETEASE RECOMMEND',
         originFilename: 'REMOTE',
         playlist: [{
