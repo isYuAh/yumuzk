@@ -3,22 +3,22 @@
   <MouseMenu :arg="mm.arg" :show="mm.show" :menulist="mm.menulist"
              :position="mm.position"
   />
-    <div @click="ZKStore.nowTab = 'Playlist';" class="returnBtn">
+    <div @click="zks.nowTab = 'Playlist';" class="returnBtn">
         <svg t="1711457272465" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4244" width="48" height="48"><path d="M963.2 0L1024 67.2 512 614.4 0 67.2 60.8 0 512 480 963.2 0z" fill="currentColor" p-id="4245"></path></svg>
     </div>
     <div class="partContainer">
         <div class="listInfo">
             <div class="faceImg">
-                <img :src="ZKStore.playlist.raw.pic" alt="">
+                <img :src="zks.playlist.raw.pic" alt="">
             </div>
             <div class="info forbidSelect">
                 <div class="top">
-                  <div class="title">{{ ZKStore.playlist.raw.title }}</div>
-                  <div v-show="ZKStore.playlist.raw.originFilename === 'REMOTE'" @click="collectPlaylist" class="collectPlaylist">收藏</div>
+                  <div class="title">{{ zks.playlist.raw.title }}</div>
+                  <div v-show="zks.playlist.raw.originFilename === 'REMOTE'" @click="collectPlaylist" class="collectPlaylist">收藏</div>
                 </div>
                 <div class="bottom">
-                    <div class="total">TOTAL {{ ZKStore.playlist.songs.length }}</div>
-                    <div class="total">{{ ZKStore.playlist.raw.intro || 'AN ALBUM CREATED'}}</div>
+                    <div class="total">TOTAL {{ zks.playlist.songs.length }}</div>
+                    <div class="total">{{ zks.playlist.raw.intro || 'AN ALBUM CREATED'}}</div>
                     <button @click="playAll" class="PlayAll">
                         <div class="svgIcon">
                             <svg t="1711448701001" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3437"><path d="M73.142857 0 910.957714 512 73.142857 1024Z" fill="currentColor" p-id="3438"></path></svg>
@@ -62,31 +62,32 @@ import simplebar from 'simplebar-vue';
 import 'simplebar-vue/dist/simplebar.min.css'
 import {computed, ref, toRaw, watch} from 'vue';
 import { useZKStore } from '../stores/useZKstore';
+import {storeToRefs} from "pinia";
 import emitter from '@/emitter';
 import '@/assets/songlist.css'
 import { BaseDirectory, writeTextFile } from '@tauri-apps/api/fs';
 import { showMsg } from '@/utils/u';
 import Fuse from "fuse.js";
-let ZKStore = useZKStore();
+const {zks} = storeToRefs(useZKStore());
 let filter = ref('');
-let FuseVal = ref(new Fuse(ZKStore.playlist.songs, {
+let FuseVal = ref(new Fuse(zks.value.playlist.songs, {
   keys: ['title', 'singer']
 }))
 // console.dir('$FuseVal', FuseVal.value)
 let showingSonglist = computed(() => {
   // console.log('$filterValue', filter.value)
   if (!filter.value) {
-    return ZKStore.playlist.songs.map((element, index) => ({item: element, refIndex: index}))
+    return zks.value.playlist.songs.map((element, index) => ({item: element, refIndex: index}))
   }else {
     // console.log('$fvSearch', FuseVal.value.search(filter.value))
     return FuseVal.value.search(filter.value)
   }
 })
 function playAll() {
-    // ZKStore.play.mode = 'list';
-    ZKStore.play.playlist = structuredClone(toRaw(ZKStore.playlist.songs))
-    if (ZKStore.play.playlist[0]) {
-        emitter.emit('playSong',{song: ZKStore.play.playlist[0]})
+    // zks.value.play.mode = 'list';
+    zks.value.play.playlist = structuredClone(toRaw(zks.value.playlist.songs))
+    if (zks.value.play.playlist[0]) {
+        emitter.emit('playSong',{song: zks.value.play.playlist[0]})
     }
 }
 let mm = ref({
@@ -124,7 +125,7 @@ function menu_deleteSong(arg: any) {
     if (arg.song && arg.si >= 0) {
         let ser = arg.si + 1;
         let componentIndex = -1;
-        let np = ZKStore.playlists[ZKStore.playlist.listIndex];
+        let np = zks.value.playlists[zks.value.playlist.listIndex];
         for (let cI = 0; cI < np.playlist.length; cI++) {
             let  c = np.playlist[cI];
             if (c.type === 'data') {
@@ -139,47 +140,47 @@ function menu_deleteSong(arg: any) {
         if (componentIndex >= 0) {
             let originFn = np.originFilename;
             (np.playlist[componentIndex] as list_data).songs.splice(ser - 1, 1);
-            ZKStore.playlist.songs.splice(arg.si, 1);
+            zks.value.playlist.songs.splice(arg.si, 1);
             writeTextFile(`res/lists/${originFn}`, JSON.stringify(toRaw(np)), {dir: BaseDirectory.Resource}).then(() => {
-                showMsg(ZKStore.message, 4000, '删除成功');
+                showMsg(zks.value.message, 4000, '删除成功');
             }).catch(() => {
-                showMsg(ZKStore.message, 4000, `写入文件${originFn}失败`);
+                showMsg(zks.value.message, 4000, `写入文件${originFn}失败`);
             })
             
         }
     }
     mm.value.show = false;
 }
-watch(() => ZKStore.playlist.listIndex, () => {
-  if (ZKStore.playlist.listIndex === -2) {
+watch(() => zks.value.playlist.listIndex, () => {
+  if (zks.value.playlist.listIndex === -2) {
     mm.value.menulist[0].show = false;
   }else {
-    mm.value.menulist[0].show = ZKStore.playlist.raw.playlist.every((s) => s.type === 'data')
+    mm.value.menulist[0].show = zks.value.playlist.raw.playlist.every((s) => s.type === 'data')
   }
 }, {immediate: true})
 function playSong_withCheck(song: song) {
-    if (ZKStore.play.playlist.length) {
+    if (zks.value.play.playlist.length) {
         emitter.emit('playSong',{song})
     }else {
-        ZKStore.play.playlist = structuredClone(toRaw(ZKStore.playlist.songs))
+        zks.value.play.playlist = structuredClone(toRaw(zks.value.playlist.songs))
         emitter.emit('playSong',{song})
     }
 }
 function collectPlaylist() {
-  let id = ZKStore.playlist.raw.title;
-  // if (ZKStore.playlist.raw.playlist[0].type === 'trace_netease_playlist') {
+  let id = zks.value.playlist.raw.title;
+  // if (zks.value.playlist.raw.playlist[0].type === 'trace_netease_playlist') {
   //
   // }
   writeTextFile(`res/lists/${id}.json`, JSON.stringify({
-    title: ZKStore.playlist.raw.title,
-    pic: ZKStore.playlist.raw.pic,
-    intro: ZKStore.playlist.raw.intro,
-    playlist: ZKStore.playlist.raw.playlist,
+    title: zks.value.playlist.raw.title,
+    pic: zks.value.playlist.raw.pic,
+    intro: zks.value.playlist.raw.intro,
+    playlist: zks.value.playlist.raw.playlist,
   }), {dir: BaseDirectory.Resource}).then(() => {
-    showMsg(ZKStore.message, 4000, '收藏成功');
+    showMsg(zks.value.message, 4000, '收藏成功');
     emitter.emit('refreshPlaylists', {notReset: true});
   }).catch(() => {
-    showMsg(ZKStore.message, 4000, `写入文件${id}.json失败`);
+    showMsg(zks.value.message, 4000, `写入文件${id}.json失败`);
   });
 }
 </script>

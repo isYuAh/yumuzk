@@ -51,12 +51,13 @@ import simplebar from "simplebar-vue";
 import 'simplebar-vue/dist/simplebar.min.css'
 import { normalClientInjectionKey, type song } from "@/types";
 import { AxiosResponse } from "axios";
+import {storeToRefs} from "pinia";
 import LoadingMask from '@/components/LoadingMask.vue'
 import Pagination from '@/components/Pagination.vue'
 import emitter from "@/emitter";
 import { useZKStore } from "@/stores/useZKstore";
 import CollectDialog from "@/components/Dialogs/CollectDialog.vue";
-let ZKStore = useZKStore();
+const {zks, config} = storeToRefs(useZKStore());
 let searchInput = ref<HTMLInputElement>();
 let normalClient = inject(normalClientInjectionKey)!;
 let resultList = ref<song[]>([])
@@ -70,7 +71,7 @@ function search() {
     if (searchInput.value) {
         if (suggestSelected.value === -1) {
             let query = searchInput.value.value;
-            let url = `${ZKStore.config.neteaseApi.url}search`;
+            let url = `${config.value.neteaseApi.url}search`;
             loading.value = true;
             normalClient.get(url, {
                 params: {
@@ -101,7 +102,7 @@ function search() {
 function changePage(nowPage: number) {
     if (searchInput.value) {
         let query = searchInput.value.value;
-        let url = `${ZKStore.config.neteaseApi.url}search`;
+        let url = `${config.value.neteaseApi.url}search`;
         loading.value = true;
         normalClient.get(url, {
             params: {
@@ -138,7 +139,7 @@ function nextSuggest() {
 function refreshSuggests () {
     if (searchInput.value && searchInput.value.value) {
         let query = searchInput.value.value
-        let url = `${ZKStore.config.neteaseApi.url}search/suggest`
+        let url = `${config.value.neteaseApi.url}search/suggest`
         normalClient.get(url, {
             params: {
                 keywords: query,
@@ -153,9 +154,9 @@ function refreshSuggests () {
     }
 }
 function dealSearchResultSong(_e:any, song: song) {
-    ZKStore.dialogData.waitCollect = toRaw(song);
-    ZKStore.dialog.dialogEl = shallowRef(CollectDialog);
-    ZKStore.dialog.show = true;
+    zks.value.dialogData.waitCollect = toRaw(song);
+    zks.value.dialog.dialogEl = shallowRef(CollectDialog);
+    zks.value.dialog.show = true;
 }
 </script>
 

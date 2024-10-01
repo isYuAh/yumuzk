@@ -3,7 +3,7 @@
     <div class="header">收藏</div>
     <div class="content">
         <select ref="selectComponent" style="width: 400px" name="" id="">
-            <option v-show="index < ZKStore.playlistsParts[0].count" v-for="(list, index) in ZKStore.playlists" :value="list.title">{{ list.title }}</option>
+            <option v-show="index < zks.playlistsParts[0].count" v-for="(list, index) in zks.playlists" :value="list.title">{{ list.title }}</option>
         </select>
     </div>
     <div class="footer">
@@ -18,34 +18,35 @@ import { useZKStore } from '@/stores/useZKstore.ts';
 import { showMsg } from '@/utils/u.ts';
 import { BaseDirectory, writeTextFile } from '@tauri-apps/api/fs';
 import { ref, toRaw } from 'vue';
-let ZKStore = useZKStore();
+import {storeToRefs} from "pinia";
+const {zks} = storeToRefs(useZKStore());
 let selectComponent = ref<HTMLSelectElement>();
 function collect() {
     if (selectComponent.value && selectComponent.value.selectedIndex > -1) {
-        let components = ZKStore.playlists[selectComponent.value.selectedIndex].playlist;
+        let components = zks.value.playlists[selectComponent.value.selectedIndex].playlist;
         let first = components[0];
-        let originFn = ZKStore.playlists[selectComponent.value.selectedIndex].originFilename;
+        let originFn = zks.value.playlists[selectComponent.value.selectedIndex].originFilename;
         if (first.type === 'data') {
-            first.songs.unshift(ZKStore.dialogData.waitCollect);
+            first.songs.unshift(zks.value.dialogData.waitCollect);
         }else {
             components.unshift({
                 type: "data",
-                songs: [ZKStore.dialogData.waitCollect],
+                songs: [zks.value.dialogData.waitCollect],
             })
         }
-        if (selectComponent.value.selectedIndex === ZKStore.playlist.listIndex) {
-            ZKStore.playlist.songs.unshift(ZKStore.dialogData.waitCollect)
+        if (selectComponent.value.selectedIndex === zks.value.playlist.listIndex) {
+            zks.value.playlist.songs.unshift(zks.value.dialogData.waitCollect)
         }
-        writeTextFile(`res/lists/${originFn}`, JSON.stringify(toRaw(ZKStore.playlists[selectComponent.value.selectedIndex])), {dir: BaseDirectory.Resource}).then(() => {
-            showMsg(ZKStore.message, 4000, '添加成功');
+        writeTextFile(`res/lists/${originFn}`, JSON.stringify(toRaw(zks.value.playlists[selectComponent.value.selectedIndex])), {dir: BaseDirectory.Resource}).then(() => {
+            showMsg(zks.value.message, 4000, '添加成功');
         }).catch(() => {
-            showMsg(ZKStore.message, 4000, `写入文件${originFn}失败`);
+            showMsg(zks.value.message, 4000, `写入文件${originFn}失败`);
         })
-        ZKStore.dialog.show = false;
+        zks.value.dialog.show = false;
     }
 }
 function cancel() {
-    ZKStore.dialog.show = false;
+    zks.value.dialog.show = false;
 }
 </script>
 

@@ -5,7 +5,8 @@ import {AxiosResponse} from "axios";
 import emitter from "@/emitter";
 import {inject, ref} from "vue";
 import {clientInjectionKey, normalClientInjectionKey, song} from "@/types";
-let ZKStore = useZKStore();
+import {storeToRefs} from "pinia";
+const {zks, config} = storeToRefs(useZKStore());
 let title = ref("");
 let singer = ref("");
 let id = ref("");
@@ -13,7 +14,7 @@ let selectComponent = ref<HTMLSelectElement>();
 let normalClient = inject(normalClientInjectionKey)!;
 let client = inject(clientInjectionKey)!;
 function cancel() {
-  ZKStore.dialog.show = false;
+  zks.value.dialog.show = false;
 }
 async function autoDetectFromClipboard() {
   let clip = await clipboard.readText() || '';
@@ -25,7 +26,7 @@ async function autoDetectFromClipboard() {
       id.value = match[1];
       selectComponent.value!.value = 'netease';
       let rawDetail = {} as any;
-      normalClient.get(`${ZKStore.config.neteaseApi.url}song/detail?ids=${id.value}`).then((res: AxiosResponse) => {
+      normalClient.get(`${config.value.neteaseApi.url}song/detail?ids=${id.value}`).then((res: AxiosResponse) => {
         rawDetail = res.data['songs'][0];
         title.value = rawDetail.name;
         singer.value = rawDetail.ar.map((artist: any) => artist.name).join(' & ');
@@ -53,7 +54,7 @@ async function autoDetectFromClipboard() {
       id.value = match[1];
       selectComponent.value!.value = 'qq';
       let rawDetail = {} as any;
-      normalClient.post(`${ZKStore.config.qqApi.url}api/y/get_song`, {
+      normalClient.post(`${config.value.qqApi.url}api/y/get_song`, {
         type: "qq",
         mid: id.value,
       }).then((res: AxiosResponse) => {
@@ -99,7 +100,7 @@ function addSong() {
       return;
   }
   emitter.emit('addSongTo', {song: (song as song), save: true});
-  ZKStore.dialog.show = false;
+  zks.value.dialog.show = false;
 }
 </script>
 

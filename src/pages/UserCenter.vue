@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import {inject, onMounted, onUnmounted, ref} from "vue";
 import {normalClientInjectionKey} from "@/types";
-import {saveConfig, useZKStore} from "@/stores/useZKstore.ts";
+import {useZKStore} from "@/stores/useZKstore.ts";
 import {AxiosResponse} from "axios";
 import {showMsg} from "@/utils/u.ts";
+import {storeToRefs} from "pinia";
 import emitter from "@/emitter";
 
-let ZKStore = useZKStore();
+const {zks, neteaseUser, config} = storeToRefs(useZKStore());
 let qrimgEl = ref<HTMLImageElement>();
 let qrstatus = ref('')
 let normalClient = inject(normalClientInjectionKey)!;
@@ -14,37 +15,35 @@ let mode = ref('');
 let key = ref('');
 let timer = <NodeJS.Timeout>(-1 as any);
 function checkStatus(refresh: boolean = false, force = false) {
-  if (!force && Object.values(ZKStore.neteaseUser).every(s => s)) {
+  if (!force && Object.values(neteaseUser.value).every(s => s)) {
     mode.value = 'logined';
     return;
   }
-  normalClient.post(ZKStore.config.neteaseApi.url + `login/status?timestamp=${Date.now()}`, {
-    cookie: ZKStore.neteaseUser.cookie
+  normalClient.post(config.value.neteaseApi.url + `login/status?timestamp=${Date.now()}`, {
+    cookie: neteaseUser.value.cookie
   }).then((res: AxiosResponse) => {
     console.log(res.data)
     if (res.data.data.account.status == 0) {
-      ZKStore.neteaseUser.nickname = res.data.data.profile.nickname;
-      ZKStore.neteaseUser.avatarUrl = res.data.data.profile.avatarUrl;
-      ZKStore.neteaseUser.uid = res.data.data.profile.userId;
-      ZKStore.neteaseUser.vipType = res.data.data.profile.vipType;
-      ZKStore.neteaseUser.signature = res.data.data.profile.signature || '暂无简介';
+      neteaseUser.value.nickname = res.data.data.profile.nickname;
+      neteaseUser.value.avatarUrl = res.data.data.profile.avatarUrl;
+      neteaseUser.value.uid = res.data.data.profile.userId;
+      neteaseUser.value.vipType = res.data.data.profile.vipType;
+      neteaseUser.value.signature = res.data.data.profile.signature || '暂无简介';
       if (refresh) {
         emitter.emit('refreshPlaylists', {notReset: true});
       }
-      saveConfig();
       mode.value = 'logined';
     }else {
       mode.value = 'unlogin'
-      ZKStore.neteaseUser.nickname = '';
-      ZKStore.neteaseUser.avatarUrl = '';
-      ZKStore.neteaseUser.cookie = '';
-      ZKStore.neteaseUser.uid = '';
-      ZKStore.neteaseUser.vipType = '0';
-      saveConfig();
+      neteaseUser.value.nickname = '';
+      neteaseUser.value.avatarUrl = '';
+      neteaseUser.value.cookie = '';
+      neteaseUser.value.uid = '';
+      neteaseUser.value.vipType = '0';
     }
   }).finally(() => {
     if (mode.value === 'unlogin') {
-      normalClient.post(ZKStore.config.neteaseApi.url + 'login/qr/key', {
+      normalClient.post(config.value.neteaseApi.url + 'login/qr/key', {
         timestamp: Date.now(),
       }).then((res: AxiosResponse) => {
         console.log('$Key', res.data);
@@ -52,7 +51,7 @@ function checkStatus(refresh: boolean = false, force = false) {
           key.value = res.data.data.unikey;
         }
       }).finally(() => {
-        normalClient.post(ZKStore.config.neteaseApi.url + 'login/qr/create', {
+        normalClient.post(config.value.neteaseApi.url + 'login/qr/create', {
           timestamp: Date.now(),
           key: key.value,
           qrimg: "true"
@@ -62,7 +61,7 @@ function checkStatus(refresh: boolean = false, force = false) {
             res.data.data.qrimg && (qrimgEl.value.src = res.data.data.qrimg);
           }
           timer = setInterval(async () => {
-            const status = await normalClient.get(ZKStore.config.neteaseApi.url + 'login/qr/check', {
+            const status = await normalClient.get(config.value.neteaseApi.url + 'login/qr/check', {
               params: {
                 timestamp: Date.now(),
                 key: key.value,
@@ -71,13 +70,13 @@ function checkStatus(refresh: boolean = false, force = false) {
             });
             if (status.data.code === 800) {
               clearInterval(timer);
-              showMsg(ZKStore.message, 4000, `二维码过期，请重新切换到这个页面`);
+              showMsg(zks.value.message, 4000, `二维码过期，请重新切换到这个页面`);
             }
             qrstatus.value = status.data.message;
             if (status.data.code === 803) {
               clearInterval(timer);
-              showMsg(ZKStore.message, 4000, `${status.data.message}`);
-              ZKStore.neteaseUser.cookie = status.data.cookie;
+              showMsg(zks.value.message, 4000, `${status.data.message}`);
+              neteaseUser.value.cookie = status.data.cookie;
               // console.log('$cookie', status.data.cookie);
               checkStatus(true);
             }
@@ -92,16 +91,15 @@ function checkStatus(refresh: boolean = false, force = false) {
   })
 }
 function logout() {
-  normalClient.post(ZKStore.config.neteaseApi.url + 'logout', {
-    cookie: ZKStore.neteaseUser.cookie
+  normalClient.post(config.value.neteaseApi.url + 'logout', {
+    cookie: neteaseUser.value.cookie
   }).finally(() => {
     mode.value = 'unlogin'
-    ZKStore.neteaseUser.nickname = '';
-    ZKStore.neteaseUser.avatarUrl = '';
-    ZKStore.neteaseUser.cookie = '';
-    ZKStore.neteaseUser.uid = '';
-    ZKStore.neteaseUser.vipType = '0';
-    saveConfig();
+    neteaseUser.value.nickname = '';
+    neteaseUser.value.avatarUrl = '';
+    neteaseUser.value.cookie = '';
+    neteaseUser.value.uid = '';
+    neteaseUser.value.vipType = '0';
     checkStatus(true);
   })
 }
@@ -123,10 +121,10 @@ onMounted(() => checkStatus());
   <div v-if="mode === 'logined'" class="tab">
     <div class="loginedContainer">
       <div class="userInfo">
-        <img :src="ZKStore.neteaseUser.avatarUrl" class="avatar"  :alt="ZKStore.neteaseUser.nickname"/>
+        <img :src="neteaseUser.avatarUrl" class="avatar"  :alt="neteaseUser.nickname"/>
         <div class="user">
-          <div class="nickname">{{ZKStore.neteaseUser.nickname}}</div>
-          <div class="signature">{{ZKStore.neteaseUser.signature}}</div>
+          <div class="nickname">{{neteaseUser.nickname}}</div>
+          <div class="signature">{{neteaseUser.signature}}</div>
         </div>
       </div>
       <button class="userCenterControlBtn logoutBtn" @click="logout">退出登录</button>

@@ -1,8 +1,8 @@
 <template>
 <div class="messageContainer">
     <Transition name="message">
-        <div v-show="ZKStore.message.show && ZKStore.message.text" class="message">
-            <div class="text">{{ ZKStore.message.text }}</div>
+        <div v-show="zks.message.show && zks.message.text" class="message">
+            <div class="text">{{ zks.message.text }}</div>
         </div>
     </Transition>
 </div>
@@ -11,7 +11,8 @@
 <script setup lang='ts'>
 import { useZKStore } from '@/stores/useZKstore'
 import '@/assets/anim.css'
-let ZKStore = useZKStore();
+import {storeToRefs} from "pinia";
+const {zks} = storeToRefs(useZKStore());
 </script>
 
 <style scoped>

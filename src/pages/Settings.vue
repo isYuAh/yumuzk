@@ -2,19 +2,19 @@
 import simplebar from "simplebar-vue";
 import 'simplebar-vue/dist/simplebar.min.css'
 import {ref} from "vue";
-import {saveConfig, useZKStore} from "@/stores/useZKstore.ts";
+import {useZKStore} from "@/stores/useZKstore.ts";
 import {showMsg} from "@/utils/u.ts";
-let ZKStore = useZKStore();
+import {storeToRefs} from "pinia";
+const {zks, config, colors} = storeToRefs(useZKStore());
 
 let apiConfig = ref({
-  neteaseUrl: ZKStore.config.neteaseApi.url,
-  qqUrl: ZKStore.config.qqApi.url,
+  neteaseUrl: config.value.neteaseApi.url,
+  qqUrl: config.value.qqApi.url,
 })
 function saveApiConfig () {
-  ZKStore.config.neteaseApi.url = apiConfig.value.neteaseUrl;
-  ZKStore.config.qqApi.url = apiConfig.value.qqUrl;
-  saveConfig();
-  showMsg(ZKStore.message, 4000, '保存成功')
+  config.value.neteaseApi.url = apiConfig.value.neteaseUrl;
+  config.value.qqApi.url = apiConfig.value.qqUrl;
+  showMsg(zks.value.message, 4000, '保存成功')
 }
 </script>
 
@@ -40,9 +40,9 @@ function saveApiConfig () {
     <div class="SettingsPane">
       <div class="title">颜色</div>
       <div class="content">
-        <div v-for="(_, k) in ZKStore.colors" class="colorInput apiInput">
+        <div v-for="(_, k) in colors" class="colorInput apiInput">
           <div class="label">{{k}}</div>
-          <el-color-picker show-alpha v-model="ZKStore.colors[k]" />
+          <el-color-picker show-alpha v-model="colors[k]" />
         </div>
       </div>
     </div>

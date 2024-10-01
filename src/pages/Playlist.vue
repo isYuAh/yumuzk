@@ -5,7 +5,7 @@
   />
   <simplebar class="simplebar">
     <Transition name="uianim">
-      <div v-if="ZKStore.nowTab === 'Playlist'" class="playlistControllers">
+      <div v-if="zks.nowTab === 'Playlist'" class="playlistControllers">
         <button @click="importPlaylist" class="controllerButton import">导入</button>
         <button @click="emitter.emit('refreshPlaylists', {notReset: false})" class="controllerButton import">刷新</button>
         <button @click="showPreviewDialog" class="controllerButton import">预览</button>
@@ -14,10 +14,10 @@
     </Transition>
     <div
         v-show="PartVShow[index]"
-        v-for="(p, index) in ZKStore.playlistsParts" class="playlistPart">
+        v-for="(p, index) in zks.playlistsParts" class="playlistPart">
       <div class="divideTitle">{{p.title}}</div>
       <div class="lists">
-        <div @contextmenu.prevent="showMenu($event, list, index + p.begin)" @click="checkDetail(index + p.begin)" v-for="(list, index) in ZKStore.playlists.slice(p.begin, p.begin + p.count)" class="item">
+        <div @contextmenu.prevent="showMenu($event, list, index + p.begin)" @click="checkDetail(index + p.begin)" v-for="(list, index) in zks.playlists.slice(p.begin, p.begin + p.count)" class="item">
           <TargetBorder>
             <div class="img">
               <img referrerpolicy="no-referrer" :src="list.pic" alt="">
@@ -42,6 +42,7 @@ import {
   type song
 } from '@/types';
 import {computed, inject, onUnmounted, ref, shallowRef, toRaw} from 'vue';
+import {storeToRefs} from "pinia";
 import {ask, open} from '@tauri-apps/api/dialog';
 import {BaseDirectory, copyFile, exists, removeFile, writeTextFile} from '@tauri-apps/api/fs'
 import TargetBorder from '../components/TargetBorder.vue'
@@ -58,21 +59,21 @@ import AddSongToDialog from '@/components/Dialogs/addSongToDialog.vue';
 
 let client = inject(clientInjectionKey)!;
 let normalClient = inject(normalClientInjectionKey)!;
-let ZKStore = useZKStore();
+const {zks, config} = storeToRefs(useZKStore());
 let PartVShow = computed(() => {
   let r = <boolean[]>[];
-  if (ZKStore.nowTab === 'Playlist') {
-    ZKStore.playlistsParts.forEach((p, index) => {
+  if (zks.value.nowTab === 'Playlist') {
+    zks.value.playlistsParts.forEach((p, index) => {
       if ('other' in p && 'showInMainPage' in p.other) {
-        console.log(ZKStore.nowTab, p.other, p.other.showInMainPage)
+        console.log(zks.value.nowTab, p.other, p.other.showInMainPage)
         r[index] = p.other.showInMainPage
       }else {
-        console.log(ZKStore.nowTab);
+        console.log(zks.value.nowTab);
         r[index] = true;
       }
     })
-  }else if (ZKStore.nowTab === 'PlaylistRecommend_netease') {
-    ZKStore.playlistsParts.forEach((p, index) => {
+  }else if (zks.value.nowTab === 'PlaylistRecommend_netease') {
+    zks.value.playlistsParts.forEach((p, index) => {
       if ('other' in p && 'type' in p.other) {
         r[index] = p.other.type === 'recommend_netease'
       }else {
@@ -116,19 +117,19 @@ function showMenu(e: any, playlist: list, pi: number) {
   }
   mm.value.arg.playlist = playlist;
   mm.value.arg.pi = pi; //playlist Index
-  mm.value.menulist[0].show = pi < ZKStore.playlistsParts[0].count;
-  mm.value.menulist[1].show = pi < ZKStore.playlistsParts[0].count;
+  mm.value.menulist[0].show = pi < zks.value.playlistsParts[0].count;
+  mm.value.menulist[1].show = pi < zks.value.playlistsParts[0].count;
   mm.value.show = true;
 }
 function menu_deletePlaylist() {
-  if (mm.value.arg.pi < ZKStore.playlistsParts[0].count) {
-    let p = ZKStore.playlists[mm.value.arg.pi];
+  if (mm.value.arg.pi < zks.value.playlistsParts[0].count) {
+    let p = zks.value.playlists[mm.value.arg.pi];
     if (p.originFilename.endsWith('json')) {
       removeFile(`res/lists/${p.originFilename}`, {dir: BaseDirectory.Resource}).then(() => {
-        showMsg(ZKStore.message, 4000, `删除${p.title}成功`);
+        showMsg(zks.value.message, 4000, `删除${p.title}成功`);
         emitter.emit('refreshPlaylists',{notReset: false});
       }).catch(() => {
-        showMsg(ZKStore.message, 4000, `删除${p.originFilename}文件失败`);
+        showMsg(zks.value.message, 4000, `删除${p.originFilename}文件失败`);
       }).finally(() => {
         mm.value.show = false;
       })
@@ -139,18 +140,18 @@ function parseComponent(comIndex: number, components: playlistComponent[]) {
     // console.log(comIndex, components[comIndex], '$');
     let component = components[comIndex];
     if (comIndex >= components.length) {
-        ZKStore.nowTab = 'PlaylistDetail';
+        zks.value.nowTab = 'PlaylistDetail';
         return;
     }
     if (component.type === 'data') {
-        ZKStore.loading.text = `加载 Data 数据 ${comIndex + 1} / ${components.length}`;
-        useZKStore().playlist.songs.push(...component.songs);
+        zks.value.loading.text = `加载 Data 数据 ${comIndex + 1} / ${components.length}`;
+        zks.value.playlist.songs.push(...component.songs);
         comIndex++;
         parseComponent(comIndex, components);
     }else if (component.type === 'trace_bilibili_fav') {
         let pn = 0;
         let getNextPage = function() {
-            ZKStore.loading.text = `Bilibili 已加载 ${Math.max(pn)} 页 ${comIndex + 1} / ${components.length}`;
+            zks.value.loading.text = `Bilibili 已加载 ${Math.max(pn)} 页 ${comIndex + 1} / ${components.length}`;
             pn++;
             client.get('https://api.bilibili.com/x/v3/fav/resource/list', {
                 params: {
@@ -159,7 +160,7 @@ function parseComponent(comIndex: number, components: playlistComponent[]) {
                     ps: 20,
                 }
             }).then(res => {
-                ZKStore.playlist.songs.push(...res.data.data.medias.map((m: any) => ({
+                zks.value.playlist.songs.push(...res.data.data.medias.map((m: any) => ({
                     type: 'bilibili', 
                     BV: m.bvid, 
                     title: m.title,
@@ -177,9 +178,9 @@ function parseComponent(comIndex: number, components: playlistComponent[]) {
         getNextPage()
     }else if (component.type === 'trace_siren') {
         let songsApi = 'https://monster-siren.hypergryph.com/api/songs';
-        ZKStore.loading.text = `加载 塞壬唱片 ${comIndex + 1} / ${components.length}`;
+        zks.value.loading.text = `加载 塞壬唱片 ${comIndex + 1} / ${components.length}`;
         normalClient.get(songsApi).then(res => {
-            ZKStore.playlist.songs.push(...res.data.data.list.map((s: any) => {
+            zks.value.playlist.songs.push(...res.data.data.list.map((s: any) => {
                 return <song>{
                     title: s.name,
                     singer: s.artists.join(' / '),
@@ -191,12 +192,12 @@ function parseComponent(comIndex: number, components: playlistComponent[]) {
             parseComponent(comIndex, components);
         })
     }else if (component.type === 'trace_netease_playlist') {
-        normalClient.get(ZKStore.config.neteaseApi.url + 'playlist/detail', {
+        normalClient.get(config.value.neteaseApi.url + 'playlist/detail', {
           params: {
               id: component.id,
           }
         }).then(res => {
-          ZKStore.playlist.songs.push(...res.data.playlist.tracks.map((track: any) => {
+          zks.value.playlist.songs.push(...res.data.playlist.tracks.map((track: any) => {
             return <song>{
               pic: track.al.picUrl,
               title: track.name,
@@ -209,41 +210,41 @@ function parseComponent(comIndex: number, components: playlistComponent[]) {
           parseComponent(comIndex, components);
         })
     }else if (component.type === 'trace_qq_playlist') {
-        if (!ZKStore.config.qqApi.enable) {
+        if (!config.value.qqApi.enable) {
             comIndex++;
             parseComponent(comIndex, components);
             return;
         }
-        normalClient.post(ZKStore.config.qqApi.url + 'api/y/get_playlistDetail', {
+        normalClient.post(config.value.qqApi.url + 'api/y/get_playlistDetail', {
             type: "qq",
             id: component.id
         }).then((res: AxiosResponse) => {
             let result = res.data.data[0];
-            ZKStore.playlist.songs.push(...result.songlist.map((r: any) => ({...r, type: 'qq'})));
+            zks.value.playlist.songs.push(...result.songlist.map((r: any) => ({...r, type: 'qq'})));
             comIndex++;
             parseComponent(comIndex, components);
         })
     }
 }
 function checkDetail(index: number, remote = false, raw: list = ({} as any)) {
-    ZKStore.nowTab = 'Loading';
-    ZKStore.loading.text = '';
+    zks.value.nowTab = 'Loading';
+    zks.value.loading.text = '';
     if (!remote) {
-      if (ZKStore.playlist.listIndex === index) {
-        ZKStore.nowTab = 'PlaylistDetail';
+      if (zks.value.playlist.listIndex === index) {
+        zks.value.nowTab = 'PlaylistDetail';
       }else {
-        let list = ZKStore.playlists[index];
-        ZKStore.playlist.listIndex = index
-        ZKStore.playlist.raw = list;
-        ZKStore.playlist.songs = [];
+        let list = zks.value.playlists[index];
+        zks.value.playlist.listIndex = index
+        zks.value.playlist.raw = list;
+        zks.value.playlist.songs = [];
         let components = list.playlist;
         let comIndex = 0;
         parseComponent(comIndex, components);
       }
     }else {
-      ZKStore.playlist.listIndex = -2;
-      ZKStore.playlist.songs = [];
-      ZKStore.playlist.raw = raw;
+      zks.value.playlist.listIndex = -2;
+      zks.value.playlist.songs = [];
+      zks.value.playlist.raw = raw;
       let components = raw.playlist;
       let comIndex = 0;
       parseComponent(comIndex, components);
@@ -265,14 +266,14 @@ function addSongTo(song: song, save: boolean) {
       songs: [song],
     })
   }
-  if (mm.value.arg.pi === ZKStore.playlist.listIndex) {
-    ZKStore.playlist.songs.unshift(song)
+  if (mm.value.arg.pi === zks.value.playlist.listIndex) {
+    zks.value.playlist.songs.unshift(song)
   }
   if (save) {
-    writeTextFile(`res/lists/${originFn}`, JSON.stringify(toRaw(ZKStore.playlists[mm.value.arg.pi])), {dir: BaseDirectory.Resource}).then(() => {
-      showMsg(ZKStore.message, 4000, '添加成功');
+    writeTextFile(`res/lists/${originFn}`, JSON.stringify(toRaw(zks.value.playlists[mm.value.arg.pi])), {dir: BaseDirectory.Resource}).then(() => {
+      showMsg(zks.value.message, 4000, '添加成功');
     }).catch(() => {
-      showMsg(ZKStore.message, 4000, `写入文件${originFn}失败`);
+      showMsg(zks.value.message, 4000, `写入文件${originFn}失败`);
     })
   }
 }
@@ -287,41 +288,41 @@ function importPlaylist() {
         }
         ]
     }).then((fn: any) => {
-        if (ZKStore.resourceDir) {
+        if (zks.value.resourceDir) {
             fn = fn.replaceAll('\\', '/')
-            exists(ZKStore.resourceDir + 'res/lists/' + path.basename(fn)).then((val: boolean) => {
+            exists(zks.value.resourceDir + 'res/lists/' + path.basename(fn)).then((val: boolean) => {
                 if (val) {
                     ask('文件已存在，是否覆盖？').then((choice: boolean) => {
                         if (choice) {
-                            copyFile(fn, ZKStore.resourceDir + 'res/lists/' + path.basename(fn)).catch((reason: any) => {
-                                showMsg(ZKStore.message, 4000, reason);
+                            copyFile(fn, zks.value.resourceDir + 'res/lists/' + path.basename(fn)).catch((reason: any) => {
+                                showMsg(zks.value.message, 4000, reason);
                             })
                             emitter.emit('refreshPlaylists', {notReset: true})
                         }
                     })
                 }else {
-                    copyFile(fn, ZKStore.resourceDir + 'res/lists/' + path.basename(fn)).catch((reason: any) => {
-                        showMsg(ZKStore.message, 4000, reason);
+                    copyFile(fn, zks.value.resourceDir + 'res/lists/' + path.basename(fn)).catch((reason: any) => {
+                        showMsg(zks.value.message, 4000, reason);
                     })
                     emitter.emit('refreshPlaylists', {notReset: true})
                 }
             }).catch((reason: any) => {
-                showMsg(ZKStore.message, 4000, reason);
+                showMsg(zks.value.message, 4000, reason);
             })
         }else {
-            showMsg(ZKStore.message, 4000, '错误: resourceDir不存在');
+            showMsg(zks.value.message, 4000, '错误: resourceDir不存在');
         }
     })
 }
 function testFunc() {
 }
 function showAddSongToDialog() {
-  ZKStore.dialog.dialogEl = shallowRef(AddSongToDialog);
-  ZKStore.dialog.show = true;
+  zks.value.dialog.dialogEl = shallowRef(AddSongToDialog);
+  zks.value.dialog.show = true;
 }
 function showPreviewDialog() {
-  ZKStore.dialog.dialogEl = shallowRef(PreviewDialog);
-  ZKStore.dialog.show = true;
+  zks.value.dialog.dialogEl = shallowRef(PreviewDialog);
+  zks.value.dialog.show = true;
 }
 emitter.on('addSongTo', ({song,save}) => addSongTo(song,save))
 emitter.on('checkDetail', ({index,remote,raw}) => checkDetail(index,remote,raw))

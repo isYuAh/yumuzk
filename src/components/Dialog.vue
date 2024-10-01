@@ -1,5 +1,5 @@
 <template>
-    <div v-show="useZKStore().dialog.show" class="dialogMask">
+    <div v-show="zks.dialog.show" class="dialogMask">
         <div class="dialogContainer">
             <slot></slot>
         </div>
@@ -8,7 +8,8 @@
 
 <script setup lang='ts'>
 import { useZKStore } from '@/stores/useZKstore';
-
+import {storeToRefs} from "pinia";
+const {zks} = storeToRefs(useZKStore());
 
 </script>
 

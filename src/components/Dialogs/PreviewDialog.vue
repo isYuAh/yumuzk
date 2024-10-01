@@ -28,17 +28,18 @@
 import { useZKStore } from '@/stores/useZKstore.ts';
 import {inject, ref} from 'vue';
 import emitter from "@/emitter";
+import {storeToRefs} from "pinia";
 import {normalClientInjectionKey, playlistComponent, type song} from "@/types";
 import {AxiosResponse} from "axios";
 import {showMsg} from "@/utils/u.ts";
-let ZKStore = useZKStore();
+const {zks, config} = storeToRefs(useZKStore());
 let normalClient = inject(normalClientInjectionKey)!;
 let previewLink = ref('');
 let asData = ref(true);
 let selectComponent = ref<HTMLSelectElement>();
 function preview() {
   if (selectComponent.value) {
-    showMsg(ZKStore.message, 4000, '加载中')
+    showMsg(zks.value.message, 4000, '加载中')
     if (selectComponent.value.value === 'auto') {
       if (previewLink.value.startsWith('https://music.163.com/#/playlist?id=') ||
         previewLink.value.startsWith('music.163.com/#/playlist?id=')
@@ -46,8 +47,8 @@ function preview() {
         let match = previewLink.value.match(/\/playlist\?id=(\d+)/);
         if (match) {
           console.log('$match', match[1]);
-          normalClient.get(`${ZKStore.config.neteaseApi.url}playlist/detail?id=${match[1]}`).then((res: AxiosResponse) => {
-            let playlist = <playlistComponent[]>[];
+          normalClient.get(`${config.value.neteaseApi.url}playlist/detail?id=${match[1]}`).then((res: AxiosResponse) => {
+            let playlist: playlistComponent[];
             if (!asData.value) {
               playlist = <playlistComponent[]>[{
                 type: "trace_netease_playlist",
@@ -86,7 +87,7 @@ function preview() {
         let match = previewLink.value.match(/id=(\d+)/);
         if (match) {
           console.log('$match', match[1]);
-          normalClient.post(ZKStore.config.qqApi.url + "api/y/get_playlistDetail", {
+          normalClient.post(config.value.qqApi.url + "api/y/get_playlistDetail", {
             type: "qq",
             id: match[1],
           }).then((res: AxiosResponse) => {
@@ -128,7 +129,7 @@ function preview() {
         }
       })
     }else if (selectComponent.value.value === 'qq') {
-      normalClient.post(ZKStore.config.qqApi.url + "api/y/get_playlistDetail", {
+      normalClient.post(config.value.qqApi.url + "api/y/get_playlistDetail", {
         type: "qq",
         id: previewLink.value,
       }).then((res: AxiosResponse) => {
@@ -154,7 +155,7 @@ function preview() {
         })
       })
     }else if (selectComponent.value.value === 'netease') {
-      normalClient.get(`${ZKStore.config.neteaseApi.url}playlist/detail?id=${previewLink.value}`).then((res: AxiosResponse) => {
+      normalClient.get(`${config.value.neteaseApi.url}playlist/detail?id=${previewLink.value}`).then((res: AxiosResponse) => {
         let playlist = <playlistComponent[]>[];
         if (!asData.value) {
           playlist = <playlistComponent[]>[{
@@ -188,11 +189,11 @@ function preview() {
         })
       })
     }
-    ZKStore.dialog.show = false;
+    zks.value.dialog.show = false;
   }
 }
 function cancel() {
-  ZKStore.dialog.show = false;
+  zks.value.dialog.show = false;
 }
 </script>
 
