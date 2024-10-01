@@ -10,6 +10,7 @@ import { RouterView } from 'vue-router';
 :root {
   --ymk-color: #fff;
   --ymk-text-color: #fff;
+  --ymk-text-shadow-color: #000;
   --ymk-progress-bg-color: #fff;
   --ymk-progress-fill-color: #fff;
   --ymk-progress-choose-fill-color: #fff;

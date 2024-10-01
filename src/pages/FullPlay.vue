@@ -319,6 +319,7 @@ watch([() => zks.value.play.song.lrc, () => {zks.value.play.song.translationLrc}
     width: 100%;
     height: 100%;
     object-fit: cover;
+    box-shadow: 0 0 15px rgba(0,0,0,.8);
 }
 .partContainer .left .singleLineTextEl {
     text-overflow: ellipsis;
@@ -334,7 +335,7 @@ watch([() => zks.value.play.song.lrc, () => {zks.value.play.song.translationLrc}
     max-width: 300px;
     line-height: 42px;
     height: 42px;
-    color: #18191C;
+    color: var(--ymk-text-color);
 }
 .partContainer .left .singer {
     font-size: 14px;
@@ -342,7 +343,7 @@ watch([() => zks.value.play.song.lrc, () => {zks.value.play.song.translationLrc}
     max-width: 300px;
     line-height: 20px;
     height: 20px;
-    color: #666;
+    color: var(--ymk-text-color);
     max-width: 280px;
 }
 .partContainer .left .type {
@@ -352,12 +353,12 @@ watch([() => zks.value.play.song.lrc, () => {zks.value.play.song.translationLrc}
     max-width: 300px;
     line-height: 24px;
     height: 24px;
-    color: #18191C;
+    color: var(--ymk-color);
 }
 .partContainer .left .playProgress, .partContainer .left .volumeProgress {
     position: relative;
     height: 12px;
-    border: 1px solid #61666D;
+    border: 1px solid var(--ymk-color);
     width: 280px;
 }
 .partContainer .left .playProgress .fill, .partContainer .left .volumeProgress .fill {
@@ -365,10 +366,11 @@ watch([() => zks.value.play.song.lrc, () => {zks.value.play.song.translationLrc}
     top: 0;
     left: 0;
     bottom: 0;
-    background-color: #18191C;
+    background-color: var(--ymk-color);
     transition: all .15s;
 }
 .partContainer .left .playProgressTip, .partContainer .left .volumeProgressTip {
+    color: var(--ymk-color);
     font-size: 14px;
     font-family: Bender;
     letter-spacing: 1px;
@@ -386,7 +388,7 @@ watch([() => zks.value.play.song.lrc, () => {zks.value.play.song.translationLrc}
 .partContainer .left .controlButtons .playbutton {
     width: 24px;
     height: 24px;
-    color: #444;
+    color: var(--ymk-color);
     margin: 0 20px;
 }
 
@@ -417,9 +419,10 @@ watch([() => zks.value.play.song.lrc, () => {zks.value.play.song.translationLrc}
     text-align: center;
     word-break: break-all;
     transition: all .2s;
+    color: var(--ymk-text-color);
 }
 .lrcContainer .lrcItem.active {
-    background-color: #18191C;
+    background-color: rgba(0,0,0,.8);
     color: #fff;
 }
 .partContainer .playmodeController {
@@ -428,7 +431,7 @@ watch([() => zks.value.play.song.lrc, () => {zks.value.play.song.translationLrc}
 }
 .partContainer .playmodeController .modeitem {
     cursor: pointer;
-    color: #000;
+    color: var(--ymk-color);
     width: 24px;
     height: 24px;
 }
@@ -442,6 +445,7 @@ watch([() => zks.value.play.song.lrc, () => {zks.value.play.song.translationLrc}
 .partContainer .right .lrcStatus .status {
     font-family: NovecentoWide, SourceSansCNM;
     font-size: 44px;
-    color: #000;
+    color: var(--ymk-text-color);
+    text-shadow: 0 0 12px var(--ymk-text-shadow-color);
 }
 </style>

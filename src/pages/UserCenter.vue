@@ -150,6 +150,7 @@ onMounted(() => checkStatus());
 .UserCenterContainer {
   width: 100%;
   height: 100%;
+  color: var(--ymk-text-color);
 }
 .loginedContainer {
   padding: 40px;
@@ -183,11 +184,8 @@ onMounted(() => checkStatus());
   margin-right: 20px;
   padding: 7px 14px;
   border: none;
-  color: #fff;
-  background-color: #18191C;
+  color: var(--ymk-text-color);
+  background-color: var(--ymk-text-shadow-color);
   transition: all .25s;
-}
-.logoutBtn:hover {
-  background-color: #333;
 }
 </style>

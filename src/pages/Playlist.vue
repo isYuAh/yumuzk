@@ -333,7 +333,7 @@ onUnmounted(() => {
 
 <style scoped>
 .partContainer {
-  height: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
 }
@@ -400,6 +400,7 @@ onUnmounted(() => {
     box-shadow: 0 0 7px rgba(0, 0, 0, .6);
 }
 .divideTitle {
+  color: var(--ymk-text-color);
   margin: 20px;
   font-size: 24px;
   font-family: PingFang SC;

@@ -5,6 +5,7 @@ import {ref} from "vue";
 import {useZKStore} from "@/stores/useZKstore.ts";
 import {showMsg} from "@/utils/u.ts";
 import {storeToRefs} from "pinia";
+import PickColors from 'vue-pick-colors'
 const {zks, config, colors} = storeToRefs(useZKStore());
 
 let apiConfig = ref({
@@ -40,9 +41,9 @@ function saveApiConfig () {
     <div class="SettingsPane">
       <div class="title">颜色</div>
       <div class="content">
-        <div v-for="(_, k) in colors" class="colorInput apiInput">
+        <div v-for="(_, k) in colors" class="colorInput">
           <div class="label">{{k}}</div>
-          <el-color-picker show-alpha v-model="colors[k]" />
+          <PickColors show-alpha format="rgb" :format-options="['rgb', 'hex']" v-model:value="colors[k]" />
         </div>
       </div>
     </div>
@@ -71,6 +72,7 @@ function saveApiConfig () {
 .SettingsPane > .content {
   padding-top: 10px;
   padding-left: 20px;
+  color: var(--ymk-color);
 }
 .apiInput {
   margin: 10px 0;
@@ -91,6 +93,13 @@ function saveApiConfig () {
   font-family: SourceSansCNM;
   color: var(--ymk-text-color);
 }
+.colorInput .label, .colorInput .input {
+  display: inline-block;
+  height: 35px;
+  line-height: 35px;
+  font-size: 16px;
+  font-family: SourceSansCNM;
+}
 input {
   background-color: rgba(0,0,0,.3);
 }
@@ -101,7 +110,8 @@ input {
 }
 .controlBtn {
   cursor: pointer;
-  background-color: #18191C;
+  background-color: rgba(0,0,0,0.8);
+  border-radius: 16px;
   display: inline-block;
   color: #fff;
   padding: 0 15px;

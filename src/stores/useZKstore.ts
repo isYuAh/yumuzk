@@ -72,7 +72,7 @@ export const useZKStore = defineStore('ZK', () => {
       highlightLrcIndex: -1,
     },
     wbi: {},
-    histroy: [],
+    history: [],
   });
   const config = ref<any>({});
   const colors = ref<any>({});

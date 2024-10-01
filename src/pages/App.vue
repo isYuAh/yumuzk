@@ -5,9 +5,10 @@
     '--ymk-progress-bg-color': colors.progressBgColor,
     '--ymk-progress-fill-color': colors.progressFillColor,
     '--ymk-progress-choose-fill-color': colors.progressChooseFillColor,
+    '--ymk-text-shadow-color': '#000',
   }">
     <div class="backgroundFrame">
-      <video autoplay muted loop src="@/assets/bg.mp4"></video>
+      <video autoplay muted loop :src="none"></video>
     </div>
     <Transition name="uianim">
       <Dialog>
@@ -26,7 +27,7 @@
             <div @click="zks.nowTab = 'PlaylistRecommend_netease'" :class="{tab: true, active: zks.nowTab === 'PlaylistRecommend_netease'}">推荐</div>
             <div @click="turnToPlaylistDetail" :class="{tab: true, active: zks.nowTab === 'PlaylistDetail'}">歌单</div>
             <div @click="zks.nowTab = 'Search'" :class="{tab: true, active: zks.nowTab === 'Search'}">搜索</div>
-            <div @click="zks.nowTab = 'BlankPage'" :class="{tab: true, active: zks.nowTab === 'BlankPage'}">空白</div>
+            <div v-if="false" @click="zks.nowTab = 'BlankPage'" :class="{tab: true, active: zks.nowTab === 'BlankPage'}">空白</div>
             <div @click="zks.nowTab = 'UserCenter'" :class="{tab: true, active: zks.nowTab === 'UserCenter'}">
               <div class="text">{{ neteaseUser.nickname || '用户' }}</div>
               <img v-if="neteaseUser.avatarUrl" style="border-radius: 50%;margin-left: 4px;margin-top:6px; height: 28px;" :src="neteaseUser.avatarUrl" alt="">
@@ -267,7 +268,9 @@ body {
 </style>
 
 <style scoped>
-
+.colorSetter {
+  text-shadow: var(--ymk-text-shadow-color);
+}
 .backgroundFrame {
   position: fixed;
   left: 0;
@@ -303,7 +306,8 @@ body {
   font-size: 22px;
   margin-left: 24px;
   line-height: 32px;
-  color: rgba(0,0,0,.9);
+  color: var(--ymk-color);
+  opacity: 0.9;
 }
 .header .controlbtn {
   position: absolute;
@@ -314,6 +318,7 @@ body {
   z-index: 100;
 }
 .header .controlbtn .btn {
+  color: var(--ymk-color);
   width: 32px;
   height: 32px;
   line-height: 1;
@@ -322,7 +327,7 @@ body {
   transition: background-color .2s;
 }
 .header .controlbtn .btn:hover {
-  background-color: #eee;
+  background-color: rgba(0,0,0,.2);
 }
 .content {
   width: 100%;
@@ -344,11 +349,12 @@ body {
   height: 48px;
   line-height: 40px;
   transition: all .2s;
+  color: var(--ymk-text-color);
 }
 .header .tab img {
   display: inline-block;
 }
 .header .tab.active {
-    border-bottom: 4px solid #18191C
+    border-bottom: 4px solid var(--ymk-color);
 }
 </style>

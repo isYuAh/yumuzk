@@ -12,7 +12,7 @@
         autoplay ref="songSource"></video>
 </div>
 
-<div class="play forbidSelect">
+<div v-show="!zks.showFullPlay" class="play forbidSelect">
   <MouseMenu :arg="mm.arg" :show="mm.show" :menulist="mm.menulist"
              :position="mm.position"
   />
@@ -671,8 +671,8 @@ onUnmounted(() => {
     display: none;
 }
 .play {
-    /* box-shadow: 0 0 4px rgba(0, 0, 0, .1); */
     height: 64px;
+  background-color: rgba(0,0,0,.2);
 }
 .play {
     position: relative;
@@ -818,7 +818,7 @@ onUnmounted(() => {
     height: 24px;
 }
 .play .playmodeController .modeitem:hover {
-    //color: #18191C;
+    /*color: #18191C;*/
 }
 .play .fullPlayBtn {
   cursor: pointer;
@@ -829,14 +829,17 @@ onUnmounted(() => {
   height: 24px;
   color: var(--ymk-color);
 }
+.play .fullPlayBtn svg {
+  color: var(--ymk-color);
+}
 .play .fullPlayBtn:hover {
-  //color: #18191C;
+  /*color: #18191C;*/
 }
 .play .playlistSonglist {
-  box-shadow: 0 0 10px rgba(0,0,0,.2);
+  box-shadow: 0 0 10px rgba(0,0,0,.8);
   left: 0;
   right: 0;
-  background-color: #fff;
+  background-color: rgba(0,0,0,.8);
   position: absolute;
   bottom: 64px;
 }
@@ -853,6 +856,7 @@ onUnmounted(() => {
   font-size: 20px;
   font-family: SourceSansCNM;
   border-bottom: 1px solid #f2f3f4;
+  color: var(--ymk-text-color);
 }
 .play .songs, .play .container, .simplebar {
   height: 100%;
