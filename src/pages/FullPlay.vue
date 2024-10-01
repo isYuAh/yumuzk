@@ -183,7 +183,7 @@ async function freshLrcElement() {
         })
     }
 }
-watch([() => ZKStore.play.highlightLrcIndex, () => ZKStore.play.song.lrc, () => ZKStore.showFullPlay], () => {
+watch([() => ZKStore.play.highlightLrcIndex, () => ZKStore.play.song.lrc, () => ZKStore.showFullPlay, () => ZKStore.play.lang], () => {
     freshLrcElement();
 }, {deep: true})
 import { listen } from '@tauri-apps/api/event';
@@ -287,7 +287,7 @@ watch([() => ZKStore.play.song.lrc, () => {ZKStore.play.song.translationLrc}, ()
     bottom: 0;
     left: 0;
     right: 0;
-    background-color: #fff;
+    //background-color: #fff;
     z-index: 10;
     display: grid;
     grid-template-columns: 360px 1fr;
@@ -392,7 +392,7 @@ watch([() => ZKStore.play.song.lrc, () => {ZKStore.play.song.translationLrc}, ()
 .partContainer .left .controlButtons .translate {
     width: 24px;
     height: 24px;
-    color: #444;
+    color: var(--ymk-text-color);
     margin: 0 20px;
 }
 
@@ -427,12 +427,11 @@ watch([() => ZKStore.play.song.lrc, () => {ZKStore.play.song.translationLrc}, ()
 }
 .partContainer .playmodeController .modeitem {
     cursor: pointer;
-    color: #61666D;
+    color: #000;
     width: 24px;
     height: 24px;
 }
 .partContainer .playmodeController .modeitem:hover {
-    color: #18191C;
 }
 .partContainer .right .lrcStatus {
     display: flex;
@@ -442,6 +441,6 @@ watch([() => ZKStore.play.song.lrc, () => {ZKStore.play.song.translationLrc}, ()
 .partContainer .right .lrcStatus .status {
     font-family: NovecentoWide, SourceSansCNM;
     font-size: 44px;
-    color: #38393C;
+    color: #000;
 }
 </style>

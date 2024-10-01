@@ -682,7 +682,7 @@ onUnmounted(() => {
     font-family: PingFang SC;
     position: absolute;
     top: -29px;
-    background-color: rgba(0, 0, 0);
+    background-color: rgba(0,0,0,.3);
     padding: 2px 5px;
     line-height: 20px;
     color: #fff;
@@ -693,7 +693,7 @@ onUnmounted(() => {
     height: 4px;
     left: 0;
     right: 0;
-    background-color: #f2f3f4;
+    background-color: var(--ymk-progress-bg-color);
     position: absolute;
     top: 0;
     transition: all .1s;
@@ -704,7 +704,7 @@ onUnmounted(() => {
     top: 0;
     width: 0%;
     /* background-color: #ec452c; */
-    background-color: #18191C;
+    background-color: var(--ymk-progress-fill-color);
     transition: alls .1s;
 }
 .play .progress .chooseFill {
@@ -712,7 +712,7 @@ onUnmounted(() => {
     height: 4px;
     top: 0;
     width: 0%;
-    background-color: #d2d3d4;
+    background-color: var(--ymk-progress-choose-fill-color);
 }
 .play .songface {
   cursor: pointer;
@@ -734,6 +734,7 @@ onUnmounted(() => {
 .play .songInformation .title {
   cursor: pointer;
     font-family: PingFang SC;
+    color: var(--ymk-text-color);
     font-size: 16px;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -745,7 +746,7 @@ onUnmounted(() => {
 .play .songInformation .singer {
   margin-top: 5px;
   padding-left: 7px;
-  color: #61666D;
+  color: var(--ymk-text-color);
   font-size: 14px;
   display: -webkit-box;
   -webkit-line-clamp: 1;
@@ -761,7 +762,7 @@ onUnmounted(() => {
     cursor: pointer;
     width: 24px;
     height: 24px;
-    color: #444;
+    color: var(--ymk-color);
     margin: 0 20px;
 }
 .play .durationInfo {
@@ -776,7 +777,7 @@ onUnmounted(() => {
 .play .durationInfo .infoItem {
     font-family: Bender;
     font-weight: bold;
-    color: #444;
+    color: var(--ymk-color);
     font-size: 14px;
     letter-spacing: 1px;
     margin: 2px 10px;
@@ -787,12 +788,13 @@ onUnmounted(() => {
     flex-direction: column;
 }
 .play .volumeController .volumeTip {
+    color: var(--ymk-text-color);
     font-size: 12px;
     font-weight: bold;
 }
 .play .volumeController .volumeProgress {
     position: relative;
-    border: 1.5px solid #61666D;
+    border: 1.5px solid var(--ymk-color);
     width: 150px;
     height: 14px;
 }
@@ -801,7 +803,7 @@ onUnmounted(() => {
     top: 0;
     bottom: 0;
     width: 100%;
-    background-color: #61666D;
+    background-color: var(--ymk-color);
     transition: all .1s;
 }
 .play .playmodeController {
@@ -810,12 +812,12 @@ onUnmounted(() => {
 }
 .play .playmodeController .modeitem {
     cursor: pointer;
-    color: #61666D;
+    color: var(--ymk-color);
     width: 24px;
     height: 24px;
 }
 .play .playmodeController .modeitem:hover {
-    color: #18191C;
+    //color: #18191C;
 }
 .play .fullPlayBtn {
   cursor: pointer;
@@ -824,10 +826,10 @@ onUnmounted(() => {
   right: 10px;
   width: 24px;
   height: 24px;
-  color: #61666D;
+  color: var(--ymk-color);
 }
 .play .fullPlayBtn:hover {
-  color: #18191C;
+  //color: #18191C;
 }
 .play .playlistSonglist {
   box-shadow: 0 0 10px rgba(0,0,0,.2);

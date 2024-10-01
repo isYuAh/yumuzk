@@ -1,15 +1,16 @@
 import { defineStore } from 'pinia';
-import type {list, messageController, song, songInPlay, song_lrc_item, playlistPart} from '../types'
+import type {list, messageController, song, songInPlay, song_lrc_item, playlistPart} from '@/types'
 import { BaseDirectory, writeTextFile } from '@tauri-apps/api/fs';
 import CollectDialog from '@/components/Dialogs/CollectDialog.vue';
 import { shallowRef } from 'vue';
 export function saveConfig() {
-  writeTextFile('res/config.json', JSON.stringify({config: useZKStore().config, neteaseUser: useZKStore().neteaseUser}), {dir: BaseDirectory.Resource})
+  writeTextFile('res/config.json', JSON.stringify({config: useZKStore().config, neteaseUser: useZKStore().neteaseUser, colors: useZKStore().colors}), {dir: BaseDirectory.Resource})
 }
 
 export const useZKStore = defineStore('ZK', {
   state: () => ({
     config: {} as any,
+    colors: {} as any,
     playlists: <list[]>[],
     playlistsParts: <playlistPart[]>[],
     nowTab: 'Playlist',
@@ -82,7 +83,6 @@ export const useZKStore = defineStore('ZK', {
       uid: '',
       cookie: '',
       signature: '',
-    }
+    },
   }),
-  // 在这里可以定义 getters、mutations 和 actions
 });

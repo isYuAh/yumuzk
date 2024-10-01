@@ -21,7 +21,7 @@ function saveApiConfig () {
 <template>
 <div class="SettingsContainer">
   <simplebar class="simplebar">
-    <div class="SettingsPane">
+    <div class="SettingsPane css1">
       <div class="title">API</div>
       <div class="content">
         <div class="apiInput">
@@ -34,6 +34,15 @@ function saveApiConfig () {
         </div>
         <div class="controlBtns">
           <div @click="saveApiConfig" class="controlBtn">保存</div>
+        </div>
+      </div>
+    </div>
+    <div class="SettingsPane">
+      <div class="title">颜色</div>
+      <div class="content">
+        <div v-for="(_, k) in ZKStore.colors" class="colorInput apiInput">
+          <div class="label">{{k}}</div>
+          <el-color-picker show-alpha v-model="ZKStore.colors[k]" />
         </div>
       </div>
     </div>
@@ -57,6 +66,7 @@ function saveApiConfig () {
 .SettingsPane > .title {
   font-family: SourceSansCNM;
   font-size: 28px;
+  color: var(--ymk-text-color);
 }
 .SettingsPane > .content {
   padding-top: 10px;
@@ -70,12 +80,19 @@ function saveApiConfig () {
   width: 70px;
   margin-right: 10px;
 }
+.colorInput .label {
+  width: auto;
+}
 .apiInput .label, .apiInput .input {
   display: inline-block;
   height: 35px;
   line-height: 35px;
   font-size: 16px;
   font-family: SourceSansCNM;
+  color: var(--ymk-text-color);
+}
+input {
+  background-color: rgba(0,0,0,.3);
 }
 .apiInput .input {
   flex: 1;

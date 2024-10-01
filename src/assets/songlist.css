@@ -14,9 +14,9 @@
     width: 100%;
     display: grid;
     grid-auto-rows: 38px;
-    color: #18191C;
 }
 .songTable .song {
+    color: var(--ymk-text-color);
     padding: 7px 20px;
     display: grid;
     column-gap: 20px;
@@ -24,7 +24,7 @@
     transition: background .15s;
 }
 .songTable .song:hover, .songTable .song.active {
-    background-color: #38393C;
+    background-color: rgba(0,0,0,.35);
     /* background-color: #18191C; */
     color: #fff;
 }
@@ -39,6 +39,6 @@
 }
 .songInfo sub {
     margin-left: 4px;
-    color: #666;
+    color: var(--ymk-text-color);
     font-family: NovecentoWide;
 }

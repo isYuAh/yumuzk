@@ -21,7 +21,7 @@
                     <div class="total">{{ ZKStore.playlist.raw.intro || 'AN ALBUM CREATED'}}</div>
                     <button @click="playAll" class="PlayAll">
                         <div class="svgIcon">
-                            <svg t="1711448701001" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3437"><path d="M73.142857 0 910.957714 512 73.142857 1024Z" fill="#18191C" p-id="3438"></path></svg>
+                            <svg t="1711448701001" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3437"><path d="M73.142857 0 910.957714 512 73.142857 1024Z" fill="currentColor" p-id="3438"></path></svg>
                         </div>
                         <div class="text">播放全部</div>
                         <div class="fill"></div>
@@ -236,14 +236,14 @@ function collectPlaylist() {
     font-weight: bold;
     font-size: 24px;
     margin-bottom: 20px;
-    color: #18191C;
+    color: var(--ymk-text-color);
     text-shadow: 0 0 5px rgba(0, 0, 0, .2);
     /* letter-spacing: 1px; */
 }
 .listInfo .info .total {
     margin-top: 2px;
     /* margin-left: 5px; */
-    color: #333;
+    color: var(--ymk-text-color);
     font-size: 18px;
     font-weight: bold;
     font-family: NovecentoWide;
@@ -271,7 +271,7 @@ function collectPlaylist() {
     height: 32px;
     text-align: left;
     transition: all .15s;
-    color: #18191C;
+    color: var(--ymk-text-color);
 }
 .listInfo .info .bottom .PlayAll .text {
     line-height: 32px;
@@ -291,7 +291,7 @@ function collectPlaylist() {
     bottom: 0;
     z-index: -1;
     width: 0;
-    background-color: #18191C;
+    background-color: rgba(0,0,0,.3);
 }
 .listInfo .info .bottom .PlayAll:hover {
     color: #fff;
@@ -309,13 +309,15 @@ function collectPlaylist() {
     margin-right: 10px;
     font-family: HarmonyOS SC;
     font-weight: bold;
-    color: #333;
+    color: var(--ymk-text-color);
 }
 .divider .search {
+    background-color: transparent;
     margin: 0 5px;
     font-family: SourceSansCNM;
     border: none;
-    border-bottom: 2px solid #18191C;
+    color: var(--ymk-text-color);
+    border-bottom: 2px solid var(--ymk-text-color);
     padding-bottom: 5px;
 }
 .divideLine {
@@ -416,7 +418,7 @@ function collectPlaylist() {
 .play .controlButtons .playbutton {
     width: 24px;
     height: 24px;
-    color: #444;
+    color: #11;
     margin: 0 20px;
 }
 .play .durationInfo {

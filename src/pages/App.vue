@@ -1,47 +1,61 @@
 <template>
-  <Transition name="uianim">
-    <Dialog>
-      <Component :is="ZKStore.dialog.dialogEl" />
-    </Dialog>
-  </Transition>
-  <Transition name="uianim">
-    <FullPlay v-show="ZKStore.showFullPlay"></FullPlay>
-  </Transition>
-  <div class="container">
-    <div data-tauri-drag-region class="header forbidSelect">
-      <div data-tauri-drag-region class="title">Yumuzk</div>
-      <Transition appear name="playcontroller">
-        <div v-show="!ZKStore.showFullPlay" class="tabs">
-          <div @click="ZKStore.nowTab = 'Playlist'" :class="{tab: true, active: ZKStore.nowTab === 'Playlist'}">首页</div>
-          <div @click="ZKStore.nowTab = 'PlaylistRecommend_netease'" :class="{tab: true, active: ZKStore.nowTab === 'PlaylistRecommend_netease'}">推荐</div>
-          <div @click="turnToPlaylistDetail" :class="{tab: true, active: ZKStore.nowTab === 'PlaylistDetail'}">歌单</div>
-          <div @click="ZKStore.nowTab = 'Search'" :class="{tab: true, active: ZKStore.nowTab === 'Search'}">搜索</div>
-          <div @click="ZKStore.nowTab = 'UserCenter'" :class="{tab: true, active: ZKStore.nowTab === 'UserCenter'}">
-            <div class="text">{{ ZKStore.neteaseUser.nickname || '用户' }}</div>
-            <img v-if="ZKStore.neteaseUser.avatarUrl" style="border-radius: 50%;margin-left: 4px;margin-top:6px; height: 28px;" :src="ZKStore.neteaseUser.avatarUrl" alt="">
+  <div class="colorSetter" :style="{
+    '--ymk-color': ZKStore.colors.elColor,
+    '--ymk-text-color': ZKStore.colors.textColor,
+    '--ymk-progress-bg-color': ZKStore.colors.progressBgColor,
+    '--ymk-progress-fill-color': ZKStore.colors.progressFillColor,
+    '--ymk-progress-choose-fill-color': ZKStore.colors.progressChooseFillColor,
+  }">
+    <div class="backgroundFrame">
+      <video autoplay muted loop src="@/assets/bg.mp4"></video>
+    </div>
+    <Transition name="uianim">
+      <Dialog>
+        <Component :is="ZKStore.dialog.dialogEl" />
+      </Dialog>
+    </Transition>
+    <Transition name="uianim">
+      <FullPlay v-show="ZKStore.showFullPlay"></FullPlay>
+    </Transition>
+    <div class="container">
+      <div data-tauri-drag-region class="header forbidSelect">
+        <div data-tauri-drag-region class="title">Yumuzk</div>
+        <Transition appear name="playcontroller">
+          <div v-show="!ZKStore.showFullPlay" class="tabs">
+            <div @click="ZKStore.nowTab = 'Playlist'" :class="{tab: true, active: ZKStore.nowTab === 'Playlist'}">首页</div>
+            <div @click="ZKStore.nowTab = 'PlaylistRecommend_netease'" :class="{tab: true, active: ZKStore.nowTab === 'PlaylistRecommend_netease'}">推荐</div>
+            <div @click="turnToPlaylistDetail" :class="{tab: true, active: ZKStore.nowTab === 'PlaylistDetail'}">歌单</div>
+            <div @click="ZKStore.nowTab = 'Search'" :class="{tab: true, active: ZKStore.nowTab === 'Search'}">搜索</div>
+            <div @click="ZKStore.nowTab = 'BlankPage'" :class="{tab: true, active: ZKStore.nowTab === 'BlankPage'}">空白</div>
+            <div @click="ZKStore.nowTab = 'UserCenter'" :class="{tab: true, active: ZKStore.nowTab === 'UserCenter'}">
+              <div class="text">{{ ZKStore.neteaseUser.nickname || '用户' }}</div>
+              <img v-if="ZKStore.neteaseUser.avatarUrl" style="border-radius: 50%;margin-left: 4px;margin-top:6px; height: 28px;" :src="ZKStore.neteaseUser.avatarUrl" alt="">
+            </div>
+            <div @click="ZKStore.nowTab = 'Settings'" :class="{tab: true, active: ZKStore.nowTab === 'Settings'}">设置</div>
           </div>
-          <div @click="ZKStore.nowTab = 'Settings'" :class="{tab: true, active: ZKStore.nowTab === 'Settings'}">设置</div>
-        </div>
-      </Transition>
-      <div class="controlbtn">
-        <button @click="appWindow.minimize()" class="btn minimize">-</button>
-        <button @click="exit(1)" class="btn close">×</button>
-      </div>
-    </div>
-    <div class="content">
-        <Transition appear name="uianim">
-            <Playlist key="Playlist" v-if="ZKStore.nowTab === 'Playlist'"></Playlist>
-            <Playlist key="PlaylistRecommend_netease" v-else-if="ZKStore.nowTab === 'PlaylistRecommend_netease'"></Playlist>
-            <PlaylistDetail key="PlaylistDetail" v-else-if="ZKStore.nowTab === 'PlaylistDetail'"></PlaylistDetail>
-            <Loading key="Loading" v-else-if="ZKStore.nowTab === 'Loading'"></Loading>
-            <Search key="Search" v-else-if="ZKStore.nowTab === 'Search'"></Search>
-            <UserCenter key="UserCenter" v-else-if="ZKStore.nowTab === 'UserCenter'"></UserCenter>
-            <Settings key="Settings" v-else-if="ZKStore.nowTab === 'Settings'"></Settings>
         </Transition>
+        <div class="controlbtn">
+          <button @click="appWindow.minimize()" class="btn minimize">-</button>
+          <button @click="exit(1)" class="btn close">×</button>
+        </div>
+      </div>
+      <div class="content">
+        <div v-show="ZKStore.showFullPlay"></div>
+        <Transition v-show="!ZKStore.showFullPlay" appear name="uianim">
+          <Playlist key="Playlist" v-if="ZKStore.nowTab === 'Playlist'"></Playlist>
+          <Playlist key="PlaylistRecommend_netease" v-else-if="ZKStore.nowTab === 'PlaylistRecommend_netease'"></Playlist>
+          <PlaylistDetail key="PlaylistDetail" v-else-if="ZKStore.nowTab === 'PlaylistDetail'"></PlaylistDetail>
+          <Loading key="Loading" v-else-if="ZKStore.nowTab === 'Loading'"></Loading>
+          <Search key="Search" v-else-if="ZKStore.nowTab === 'Search'"></Search>
+          <UserCenter key="UserCenter" v-else-if="ZKStore.nowTab === 'UserCenter'"></UserCenter>
+          <Settings key="Settings" v-else-if="ZKStore.nowTab === 'Settings'"></Settings>
+          <BlankPage key="BlankPage" v-else-if="ZKStore.nowTab === 'BlankPage'"></BlankPage>
+        </Transition>
+      </div>
+      <Playbar></Playbar>
     </div>
-    <Playbar></Playbar>
+    <Message />
   </div>
-  <Message />
 </template>
 
 <script setup lang="ts">
@@ -103,6 +117,7 @@ const normalClient = axios.create({
 });
 import CollectDialog from '@/components/Dialogs/CollectDialog.vue'
 import Settings from "@/pages/Settings.vue";
+import BlankPage from "@/pages/BlankPage.vue";
 ZKStore.dialog.dialogEl = shallowRef(CollectDialog);
 // normalClient.interceptors.response.use(function (response) {
 //     return response;
@@ -148,6 +163,7 @@ onMounted(() => {
       let jp = JSON.parse(res);
       ZKStore.config = jp.config;
       ZKStore.neteaseUser = jp.neteaseUser;
+      ZKStore.colors = jp.colors;
       if (ZKStore.config.volume != undefined) {
         emitter.emit('changeVolumeTo', minmax(ZKStore.config.volume, 0, 1));
       }
@@ -267,6 +283,21 @@ body {
 </style>
 
 <style scoped>
+
+.backgroundFrame {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+}
+.backgroundFrame video {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+}
+
 .container {
   display: grid;
   grid-template-rows: 64px 1fr 64px;
@@ -288,7 +319,7 @@ body {
   font-size: 22px;
   margin-left: 24px;
   line-height: 32px;
-  color: #323233;
+  color: rgba(0,0,0,.9);
 }
 .header .controlbtn {
   position: absolute;

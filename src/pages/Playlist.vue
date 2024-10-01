@@ -371,6 +371,8 @@ onUnmounted(() => {
     letter-spacing: 1px;
     /* color: #333;
     text-shadow: 0 0 5px rgba(0, 0, 0, .2); */
+    text-shadow: 0 0 4px rgba(0, 0, 0, .6);
+    color: var(--ymk-text-color);
     margin-top: 5px;
     font-weight: bold;
     font-size: 20px;
